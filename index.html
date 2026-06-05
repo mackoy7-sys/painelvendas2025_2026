@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comercial Digital — Vendas 2025 vs 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
+<style>
+:root{
+  --navy:#0b1f3a; --navy2:#12325c; --orange:#ff7a00; --blue:#1f7ae0;
+  --bg:#eef1f5; --card:#fff; --txt:#1a2332; --txt2:#64748b; --line:#e2e8f0;
+  --pos:#16a34a; --neg:#dc2626; --gap:18px; --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt);padding:20px}
+.wrap{max-width:1500px;margin:0 auto}
+header.top{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:24px 28px;border-radius:var(--r);margin-bottom:var(--gap);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+header.top h1{font-size:22px;font-weight:700;letter-spacing:.3px}
+header.top .sub{font-size:13px;color:#a9bdd8;margin-top:4px}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:46px;height:46px;border-radius:11px;background:var(--orange);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:#fff}
+.filters{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:11px;color:#a9bdd8;text-transform:uppercase;letter-spacing:.5px}
+.fg select{padding:7px 11px;border:1px solid rgba(255,255,255,.18);border-radius:8px;background:rgba(255,255,255,.1);color:#fff;font-size:13px;min-width:130px}
+.fg select option{background:var(--navy);color:#fff}
+.note{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:10px 16px;border-radius:10px;font-size:13px;margin-bottom:var(--gap)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:var(--gap);margin-bottom:var(--gap)}
+.kpi{background:var(--card);border-radius:var(--r);padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-left:4px solid var(--blue)}
+.kpi:nth-child(2){border-left-color:var(--orange)}
+.kpi:nth-child(3){border-left-color:var(--navy)}
+.kpi:nth-child(4){border-left-color:var(--pos)}
+.kpi .lab{font-size:12px;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.kpi .val{font-size:27px;font-weight:800;color:var(--txt)}
+.kpi .chg{font-size:12px;font-weight:600;margin-top:5px}
+.chg.pos{color:var(--pos)} .chg.neg{color:var(--neg)}
+.chg .muted{color:var(--txt2);font-weight:500}
+.row{display:grid;gap:var(--gap);margin-bottom:var(--gap)}
+.row.r2{grid-template-columns:1.5fr 1fr}
+.row.r2b{grid-template-columns:1fr 1fr}
+.row.r3{grid-template-columns:repeat(3,1fr)}
+.card{background:var(--card);border-radius:var(--r);padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card h3{font-size:14px;font-weight:700;margin-bottom:4px}
+.card .csub{font-size:12px;color:var(--txt2);margin-bottom:14px}
+.card canvas{max-height:300px}
+.tall canvas{max-height:340px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:9px 10px;border-bottom:2px solid var(--line);color:var(--txt2);font-size:11px;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;user-select:none;white-space:nowrap}
+thead th:hover{color:var(--txt)}
+tbody td{padding:9px 10px;border-bottom:1px solid #f1f5f9}
+tbody tr:hover{background:#f8fafc}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl-wrap{max-height:420px;overflow-y:auto}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.b25{background:#dbeafe;color:#1e40af} .b26{background:#ffedd5;color:#9a3412}
+footer{text-align:center;color:var(--txt2);font-size:12px;padding:16px}
+@media(max-width:1000px){.row.r2,.row.r2b,.row.r3{grid-template-columns:1fr}}
+/* Login overlay */
+#login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
+#login-overlay.hidden{display:none}
+.login-box{background:var(--card);border-radius:var(--r);box-shadow:0 4px 24px rgba(0,0,0,.12);padding:40px 36px;width:100%;max-width:360px;text-align:center}
+.login-logo{width:60px;height:60px;background:var(--navy);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:26px;color:#fff;font-weight:700}
+.login-box h2{font-size:17px;font-weight:700;color:var(--txt);margin-bottom:4px}
+.login-box p{font-size:12px;color:var(--txt2);margin-bottom:24px}
+.login-box input{width:100%;padding:10px 14px;border:1px solid var(--line);border-radius:7px;font-size:14px;color:var(--txt);outline:none;margin-bottom:12px;letter-spacing:2px}
+.login-box input:focus{border-color:var(--blue)}
+.login-box button{width:100%;padding:11px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer}
+.login-box button:hover{background:var(--navy2)}
+.login-error{font-size:12px;color:#c0392b;margin-top:8px;min-height:16px}
+</style>
+</head>
+<body>
+
+<!-- Login overlay -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">H</div>
+    <h2>Comercial Digital — Vendas 2025 vs 2026</h2>
+    <p>Hapvida · Diretoria Vendas Digital</p>
+    <input type="password" id="login-input" placeholder="Digite a senha" autocomplete="current-password" />
+    <button onclick="checkLogin()">Entrar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <div class="logo">H</div>
+    <div>
+      <h1>Comercial Digital — Vendas 2025 vs 2026</h1>
+      <div class="sub">Vendas Digital · Hapvida · Análise comparativa de volume, faturamento e mix</div>
+    </div>
+  </div>
+  <div class="filters">
+    <div class="fg"><label>UF</label><select id="fUF"></select></div>
+    <div class="fg"><label>Canal</label><select id="fCanal"></select></div>
+    <div class="fg"><label>Comparação KPI</label>
+      <select id="fComp">
+        <option value="ytd">YTD Jan–Mai (justo)</option>
+        <option value="full">2026 parcial vs 2025 cheio</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<div class="note" id="noteBox"></div>
+
+<section class="kpis">
+  <div class="kpi"><div class="lab">Volume de Vendas</div><div class="val" id="kVol">—</div><div class="chg" id="kVolC"></div></div>
+  <div class="kpi"><div class="lab">Faturamento (Mensalidade)</div><div class="val" id="kFat">—</div><div class="chg" id="kFatC"></div></div>
+  <div class="kpi"><div class="lab">Ticket Médio</div><div class="val" id="kTk">—</div><div class="chg" id="kTkC"></div></div>
+  <div class="kpi"><div class="lab">Vol. Total Período (2025+2026)</div><div class="val" id="kTot">—</div><div class="chg muted" id="kTotC"></div></div>
+</section>
+
+<section class="row r2">
+  <div class="card tall"><h3>Volume de Vendas Mês a Mês</h3><div class="csub">Comparativo mensal 2025 vs 2026</div><canvas id="chVolMes"></canvas></div>
+  <div class="card tall"><h3>Faturamento Mês a Mês</h3><div class="csub">Soma das mensalidades (R$)</div><canvas id="chFatMes"></canvas></div>
+</section>
+
+<section class="row r2b">
+  <div class="card"><h3>Ticket Médio Mês a Mês</h3><div class="csub">Mensalidade média por venda (R$)</div><canvas id="chTkMes"></canvas></div>
+  <div class="card"><h3>Vendas por Tipo de Canal</h3><div class="csub">Volume por canal e ano</div><canvas id="chCanal"></canvas></div>
+</section>
+
+<section class="row r2b">
+  <div class="card"><h3>Vendas por Tipo de Plano</h3><div class="csub">Top planos por volume</div><canvas id="chPlano"></canvas></div>
+  <div class="card"><h3>Vendas por Faixa Etária</h3><div class="csub">Distribuição por idade do beneficiário</div><canvas id="chFaixa"></canvas></div>
+</section>
+
+<section class="row r2b">
+  <div class="card"><h3>Vendas por Estado (UF)</h3><div class="csub">Top estados por volume</div><canvas id="chUF"></canvas></div>
+  <div class="card"><h3>Top Cidades</h3><div class="csub">Maiores volumes por cidade</div><canvas id="chCidade"></canvas></div>
+</section>
+
+<section class="row">
+  <div class="card">
+    <h3>Detalhamento — Indicadores Comparativos</h3>
+    <div class="csub">Clique nos cabeçalhos para ordenar · valores filtrados por UF/Canal</div>
+    <div class="tbl-wrap">
+      <table id="tbl">
+        <thead><tr>
+          <th data-k="dim">Dimensão</th>
+          <th data-k="cat">Categoria</th>
+          <th class="num" data-k="v25">Vol 2025</th>
+          <th class="num" data-k="v26">Vol 2026</th>
+          <th class="num" data-k="dv">Δ Vol</th>
+          <th class="num" data-k="f25">Fat 2025</th>
+          <th class="num" data-k="f26">Fat 2026</th>
+          <th class="num" data-k="df">Δ Fat</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<footer>Base: BASE_DIGITAL_TOTAL · 136625 registros · Diretoria Vendas Digital. 2026 inclui Jan–Mai completos (+ fragmento parcial de Jun).</footer>
+</div>
+
+<script>
+(function(){
+  const KEY = 'vendasdigital2025_auth';
+  if(sessionStorage.getItem(KEY)==='1'){
+    document.getElementById('login-overlay').classList.add('hidden');
+  }
+  document.getElementById('login-input').addEventListener('keydown',function(e){
+    if(e.key==='Enter') checkLogin();
+  });
+})();
+
+function checkLogin(){
+  const val = document.getElementById('login-input').value;
+  if(val==='hapvida1234'){
+    sessionStorage.setItem('vendasdigital2025_auth','1');
+    document.getElementById('login-overlay').classList.add('hidden');
+  } else {
+    document.getElementById('login-error').textContent='Senha incorreta. Tente novamente.';
+    document.getElementById('login-input').value='';
+  }
+}
+
+const D = {"monthly": [{"ano": 2025, "mes": 1, "vol": 5402, "fat": 1899671.9576884795, "ticket": 351.66085851323203}, {"ano": 2025, "mes": 2, "vol": 5420, "fat": 1877823.589333757, "ticket": 346.4619168512467}, {"ano": 2025, "mes": 3, "vol": 6065, "fat": 2089426.510163628, "ticket": 344.5056076114803}, {"ano": 2025, "mes": 4, "vol": 6079, "fat": 2091221.673036225, "ticket": 344.0075132482686}, {"ano": 2025, "mes": 5, "vol": 6828, "fat": 2234870.624986959, "ticket": 327.309699031482}, {"ano": 2025, "mes": 6, "vol": 7848, "fat": 2576547.166727765, "ticket": 328.3062139051688}, {"ano": 2025, "mes": 7, "vol": 8522, "fat": 2748643.5596380504, "ticket": 322.53503398709813}, {"ano": 2025, "mes": 8, "vol": 8770, "fat": 3076786.580849668, "ticket": 350.83085300452314}, {"ano": 2025, "mes": 9, "vol": 9675, "fat": 3307266.1781218005, "ticket": 341.8362974802895}, {"ano": 2025, "mes": 10, "vol": 9454, "fat": 3371779.258182159, "ticket": 356.6510744851025}, {"ano": 2025, "mes": 11, "vol": 8259, "fat": 2737851.65493897, "ticket": 331.49917119977846}, {"ano": 2025, "mes": 12, "vol": 7244, "fat": 2461640.468983189, "ticket": 339.8178449728312}, {"ano": 2026, "mes": 1, "vol": 8312, "fat": 2715060.6263214094, "ticket": 326.6434824737018}, {"ano": 2026, "mes": 2, "vol": 7623, "fat": 2473149.928411692, "ticket": 324.43262867790787}, {"ano": 2026, "mes": 3, "vol": 10822, "fat": 3578589.7478813804, "ticket": 330.6773006728313}, {"ano": 2026, "mes": 4, "vol": 8997, "fat": 3057751.314438, "ticket": 339.8634338599533}, {"ano": 2026, "mes": 5, "vol": 10470, "fat": 3469327.137361, "ticket": 331.3588478854823}, {"ano": 2026, "mes": 6, "vol": 835, "fat": 263617.511311, "ticket": 315.7095943844311}], "ytd": {"2025": {"vol": 29794, "fat": 10193014.355209049, "ticket": 342.1163440695794}, "2026": {"vol": 46224, "fat": 15293878.754413482, "ticket": 330.86445903455956}}, "fullyear2025": {"vol": 89566, "fat": 30473529.222650655, "ticket": 340.23546013722455}, "canal": [{"ano": 2025, "CANAL": "01-INDIVIDUAL", "vol": 62252, "fat": 23488585.938212145}, {"ano": 2025, "CANAL": "02-PIM (IND/3-29 VIDAS)", "vol": 25188, "fat": 6485428.590434498}, {"ano": 2025, "CANAL": "03-MIDDLE I(30-99 VIDAS)", "vol": 1738, "fat": 409415.4620344892}, {"ano": 2025, "CANAL": "04-MIDDLE II(100-299 VIDAS)", "vol": 337, "fat": 71083.22871782946}, {"ano": 2025, "CANAL": "05-CORPORE (ALEM DE 300 VIDAS)", "vol": 9, "fat": 2746.9632516880433}, {"ano": 2025, "CANAL": "07-ADMINISTRADORA", "vol": 42, "fat": 16269.039999999999}, {"ano": 2026, "CANAL": "01-INDIVIDUAL", "vol": 27918, "fat": 10581738.707693}, {"ano": 2026, "CANAL": "02-PIM (IND/3-29 VIDAS)", "vol": 17316, "fat": 4447526.01866038}, {"ano": 2026, "CANAL": "03-MIDDLE I(30-99 VIDAS)", "vol": 775, "fat": 183801.4336811019}, {"ano": 2026, "CANAL": "04-MIDDLE II(100-299 VIDAS)", "vol": 39, "fat": 7510.46569}, {"ano": 2026, "CANAL": "05-CORPORE (ALEM DE 300 VIDAS)", "vol": 8, "fat": 1662.25}, {"ano": 2026, "CANAL": "07-ADMINISTRADORA", "vol": 1003, "fat": 335257.39}], "plano": [{"ano": 2025, "plano_grp": "N P AHO IN GM ENF CC PRM 183 - 493794225", "vol": 2211, "fat": 645985.22908626}, {"ano": 2025, "plano_grp": "NOSSO PLANO A IN GM JN 083 - 484253197", "vol": 6181, "fat": 1539998.2196195414}, {"ano": 2025, "plano_grp": "NOSSO PLANO AHO CE GM ENF JN 093 CP", "vol": 1758, "fat": 571522.069556}, {"ano": 2025, "plano_grp": "NOSSO PLANO AHO IN GM ENF CC SF 046", "vol": 3494, "fat": 1144601.093401997}, {"ano": 2025, "plano_grp": "NOTRELIFE SP", "vol": 10932, "fat": 5010617.5155534595}, {"ano": 2025, "plano_grp": "NP AHO IN GM ENF CC SF 301 CP M2", "vol": 1895, "fat": 652612.91218672}, {"ano": 2025, "plano_grp": "NP AHO IN GM ENF JN 087 - 484226190", "vol": 10351, "fat": 3943623.4791374844}, {"ano": 2025, "plano_grp": "NP AHO IND GM ENF CCF JN 143 - 485115203", "vol": 2437, "fat": 1099891.0332179538}, {"ano": 2025, "plano_grp": "OUTROS", "vol": 39822, "fat": 13482716.035587234}, {"ano": 2025, "plano_grp": "SMART 200 SP CAPITAL CE CP ENF PARCIAL M1", "vol": 1783, "fat": 393574.051394}, {"ano": 2025, "plano_grp": "SMART 200 UP + RMCA CE CP ENF PARCIAL M1", "vol": 7343, "fat": 1676760.52567}, {"ano": 2025, "plano_grp": "SMART RIO CE CP ENF PME COPAY PARCIAL M1", "vol": 1359, "fat": 311627.05824}, {"ano": 2026, "plano_grp": "N P AHO IN GM ENF CC PRM 183 - 493794225", "vol": 880, "fat": 261868.4643}, {"ano": 2026, "plano_grp": "NOSSO PLANO A IN GM JN 083 - 484253197", "vol": 3089, "fat": 770082.70449}, {"ano": 2026, "plano_grp": "NOSSO PLANO AHO CE GM ENF JN 093 CP", "vol": 985, "fat": 334535.73}, {"ano": 2026, "plano_grp": "NOSSO PLANO AHO IN GM ENF CC SF 046", "vol": 1149, "fat": 365961.793296}, {"ano": 2026, "plano_grp": "NOTRELIFE SP", "vol": 2235, "fat": 972738.163684}, {"ano": 2026, "plano_grp": "NP AHO IN GM ENF CC SF 301 CP M2", "vol": 729, "fat": 253907.165}, {"ano": 2026, "plano_grp": "NP AHO IN GM ENF JN 087 - 484226190", "vol": 4139, "fat": 1599699.0247}, {"ano": 2026, "plano_grp": "NP AHO IND GM ENF CCF JN 143 - 485115203", "vol": 970, "fat": 506997.9079}, {"ano": 2026, "plano_grp": "OUTROS", "vol": 22008, "fat": 7572037.537440482}, {"ano": 2026, "plano_grp": "SMART 200 SP CAPITAL CE CP ENF PARCIAL M1", "vol": 424, "fat": 98204.17}, {"ano": 2026, "plano_grp": "SMART 200 UP + RMCA CE CP ENF PARCIAL M1", "vol": 7037, "fat": 1587185.2}, {"ano": 2026, "plano_grp": "SMART RIO CE CP ENF PME COPAY PARCIAL M1", "vol": 1276, "fat": 291149.11}, {"ano": 2026, "plano_grp": "SMART UP IND AHO CCF ENF CP", "vol": 2138, "fat": 943129.294914}], "faixa": [{"ano": 2025, "faixa": "0-17", "vol": 34985}, {"ano": 2025, "faixa": "18-22", "vol": 5547}, {"ano": 2025, "faixa": "23-27", "vol": 10455}, {"ano": 2025, "faixa": "28-32", "vol": 10404}, {"ano": 2025, "faixa": "33-37", "vol": 7718}, {"ano": 2025, "faixa": "38-42", "vol": 6453}, {"ano": 2025, "faixa": "43-47", "vol": 4960}, {"ano": 2025, "faixa": "48-52", "vol": 2833}, {"ano": 2025, "faixa": "53-57", "vol": 1811}, {"ano": 2025, "faixa": "58+", "vol": 4400}, {"ano": 2026, "faixa": "0-17", "vol": 18473}, {"ano": 2026, "faixa": "18-22", "vol": 3245}, {"ano": 2026, "faixa": "23-27", "vol": 5340}, {"ano": 2026, "faixa": "28-32", "vol": 5407}, {"ano": 2026, "faixa": "33-37", "vol": 4239}, {"ano": 2026, "faixa": "38-42", "vol": 3321}, {"ano": 2026, "faixa": "43-47", "vol": 2516}, {"ano": 2026, "faixa": "48-52", "vol": 1435}, {"ano": 2026, "faixa": "53-57", "vol": 946}, {"ano": 2026, "faixa": "58+", "vol": 2137}], "uf": [{"ano": 2025, "UF": "AL", "vol": 1059, "fat": 466660.39212423866}, {"ano": 2025, "UF": "AM", "vol": 1491, "fat": 563374.39242143}, {"ano": 2025, "UF": "BA", "vol": 5939, "fat": 2495806.728481855}, {"ano": 2025, "UF": "CE", "vol": 4535, "fat": 1527618.0208447478}, {"ano": 2025, "UF": "DF", "vol": 1907, "fat": 590641.766444822}, {"ano": 2025, "UF": "ES", "vol": 37, "fat": 10609.65954}, {"ano": 2025, "UF": "GO", "vol": 6090, "fat": 1927450.708861613}, {"ano": 2025, "UF": "MA", "vol": 903, "fat": 294351.29105349246}, {"ano": 2025, "UF": "MG", "vol": 6146, "fat": 1665966.808752548}, {"ano": 2025, "UF": "MS", "vol": 964, "fat": 232630.92093577405}, {"ano": 2025, "UF": "MT", "vol": 524, "fat": 122083.615045926}, {"ano": 2025, "UF": "PA", "vol": 2471, "fat": 890048.813245774}, {"ano": 2025, "UF": "PB", "vol": 738, "fat": 300934.719507302}, {"ano": 2025, "UF": "PE", "vol": 4560, "fat": 1841521.4450583472}, {"ano": 2025, "UF": "PI", "vol": 1707, "fat": 470518.18999165273}, {"ano": 2025, "UF": "PR", "vol": 3849, "fat": 1212841.7292054014}, {"ano": 2025, "UF": "RJ", "vol": 2901, "fat": 976759.7822944156}, {"ano": 2025, "UF": "RN", "vol": 1879, "fat": 592007.143045232}, {"ano": 2025, "UF": "RO", "vol": 2, "fat": 725.65}, {"ano": 2025, "UF": "RR", "vol": 4, "fat": 1351.2}, {"ano": 2025, "UF": "RS", "vol": 1932, "fat": 563175.9724585708}, {"ano": 2025, "UF": "SC", "vol": 1491, "fat": 566924.5653897977}, {"ano": 2025, "UF": "SE", "vol": 999, "fat": 323860.6089985974}, {"ano": 2025, "UF": "SP", "vol": 37434, "fat": 12834246.798949113}, {"ano": 2025, "UF": "TO", "vol": 4, "fat": 1418.3}, {"ano": 2026, "UF": "-", "vol": 3, "fat": 3178.8}, {"ano": 2026, "UF": "AL", "vol": 662, "fat": 259322.39688}, {"ano": 2026, "UF": "AM", "vol": 737, "fat": 291281.08829}, {"ano": 2026, "UF": "AP", "vol": 1, "fat": 187.24}, {"ano": 2026, "UF": "BA", "vol": 2798, "fat": 1128153.9126429367}, {"ano": 2026, "UF": "CE", "vol": 2739, "fat": 1279809.3625444365}, {"ano": 2026, "UF": "DF", "vol": 1064, "fat": 316776.596366}, {"ano": 2026, "UF": "ES", "vol": 5, "fat": 1555.44}, {"ano": 2026, "UF": "GO", "vol": 2814, "fat": 897579.0991601293}, {"ano": 2026, "UF": "MA", "vol": 540, "fat": 176938.381}, {"ano": 2026, "UF": "MG", "vol": 3012, "fat": 803627.2146764238}, {"ano": 2026, "UF": "MS", "vol": 447, "fat": 131671.9608795959}, {"ano": 2026, "UF": "MT", "vol": 250, "fat": 74867.9768554994}, {"ano": 2026, "UF": "PA", "vol": 1356, "fat": 634931.57726}, {"ano": 2026, "UF": "PB", "vol": 376, "fat": 143864.16389999999}, {"ano": 2026, "UF": "PE", "vol": 2150, "fat": 754504.7358779644}, {"ano": 2026, "UF": "PI", "vol": 727, "fat": 177610.9531}, {"ano": 2026, "UF": "PR", "vol": 1904, "fat": 502848.9822025525}, {"ano": 2026, "UF": "RJ", "vol": 2444, "fat": 725060.098982}, {"ano": 2026, "UF": "RN", "vol": 824, "fat": 236777.68098292232}, {"ano": 2026, "UF": "RO", "vol": 6, "fat": 2508.5}, {"ano": 2026, "UF": "RS", "vol": 1054, "fat": 292018.50700136}, {"ano": 2026, "UF": "SC", "vol": 761, "fat": 279710.4853}, {"ano": 2026, "UF": "SE", "vol": 474, "fat": 156233.77792917323}, {"ano": 2026, "UF": "SP", "vol": 19910, "fat": 6286228.6538934875}, {"ano": 2026, "UF": "TO", "vol": 1, "fat": 248.68}], "cidade": [{"ano": 2025, "CIDADE": "APARECIDA DE GOIANIA", "vol": 952, "fat": 294291.44782182627}, {"ano": 2025, "CIDADE": "ARACAJU", "vol": 801, "fat": 264941.5384531732}, {"ano": 2025, "CIDADE": "ARARAQUARA", "vol": 938, "fat": 312559.05328693613}, {"ano": 2025, "CIDADE": "BELEM", "vol": 1576, "fat": 574372.736781158}, {"ano": 2025, "CIDADE": "BELO HORIZONTE", "vol": 2691, "fat": 745580.858649155}, {"ano": 2025, "CIDADE": "BRASILIA", "vol": 1905, "fat": 589889.506444822}, {"ano": 2025, "CIDADE": "CAMPINAS", "vol": 806, "fat": 270452.5334476692}, {"ano": 2025, "CIDADE": "CURITIBA", "vol": 2114, "fat": 586973.4430383367}, {"ano": 2025, "CIDADE": "FEIRA DE SANTANA", "vol": 764, "fat": 295847.4046043015}, {"ano": 2025, "CIDADE": "FORTALEZA", "vol": 3401, "fat": 1192306.3250412769}, {"ano": 2025, "CIDADE": "GOIANIA", "vol": 3808, "fat": 1235736.8962765604}, {"ano": 2025, "CIDADE": "GUARULHOS", "vol": 1437, "fat": 482523.3499133743}, {"ano": 2025, "CIDADE": "LIMEIRA", "vol": 988, "fat": 332905.39866943297}, {"ano": 2025, "CIDADE": "MACEIO", "vol": 991, "fat": 441271.9557870307}, {"ano": 2025, "CIDADE": "MANAUS", "vol": 1467, "fat": 552656.63699143}, {"ano": 2025, "CIDADE": "NATAL", "vol": 1005, "fat": 338793.058458652}, {"ano": 2025, "CIDADE": "OSASCO", "vol": 816, "fat": 304332.5849702315}, {"ano": 2025, "CIDADE": "RECIFE", "vol": 2154, "fat": 873443.5077618274}, {"ano": 2025, "CIDADE": "RIBEIRAO PRETO", "vol": 2771, "fat": 847798.0995910655}, {"ano": 2025, "CIDADE": "RIO DE JANEIRO", "vol": 1648, "fat": 553063.8105226135}, {"ano": 2025, "CIDADE": "SALVADOR", "vol": 3940, "fat": 1712313.660674874}, {"ano": 2025, "CIDADE": "SAO BERNARDO DO CAMPO", "vol": 1085, "fat": 432794.2646885328}, {"ano": 2025, "CIDADE": "SAO PAULO", "vol": 11839, "fat": 4079597.8979433393}, {"ano": 2025, "CIDADE": "SOROCABA", "vol": 938, "fat": 361236.11039250635}, {"ano": 2025, "CIDADE": "TERESINA", "vol": 1663, "fat": 458816.9910613527}, {"ano": 2026, "CIDADE": "APARECIDA DE GOIANIA", "vol": 408, "fat": 128451.6240693689}, {"ano": 2026, "CIDADE": "ARACAJU", "vol": 381, "fat": 124972.36792917324}, {"ano": 2026, "CIDADE": "ARARAQUARA", "vol": 311, "fat": 94438.28}, {"ano": 2026, "CIDADE": "BELEM", "vol": 886, "fat": 472254.07602}, {"ano": 2026, "CIDADE": "BELO HORIZONTE", "vol": 1241, "fat": 330271.60653620487}, {"ano": 2026, "CIDADE": "BRASILIA", "vol": 1064, "fat": 316776.596366}, {"ano": 2026, "CIDADE": "CAMPINAS", "vol": 394, "fat": 129019.196455}, {"ano": 2026, "CIDADE": "CURITIBA", "vol": 1018, "fat": 278628.5187825525}, {"ano": 2026, "CIDADE": "FEIRA DE SANTANA", "vol": 452, "fat": 155718.94318699068}, {"ano": 2026, "CIDADE": "FORTALEZA", "vol": 1945, "fat": 820549.8611844365}, {"ano": 2026, "CIDADE": "GOIANIA", "vol": 1738, "fat": 567719.90225735}, {"ano": 2026, "CIDADE": "GUARULHOS", "vol": 895, "fat": 258916.499768}, {"ano": 2026, "CIDADE": "LIMEIRA", "vol": 392, "fat": 133843.2343}, {"ano": 2026, "CIDADE": "MACEIO", "vol": 636, "fat": 248575.28688}, {"ano": 2026, "CIDADE": "MANAUS", "vol": 726, "fat": 286871.33829}, {"ano": 2026, "CIDADE": "NATAL", "vol": 431, "fat": 121827.4376}, {"ano": 2026, "CIDADE": "OSASCO", "vol": 483, "fat": 166643.754528}, {"ano": 2026, "CIDADE": "RECIFE", "vol": 916, "fat": 331673.89943123865}, {"ano": 2026, "CIDADE": "RIBEIRAO PRETO", "vol": 1009, "fat": 291958.02273318206}, {"ano": 2026, "CIDADE": "RIO DE JANEIRO", "vol": 1344, "fat": 397955.854268}, {"ano": 2026, "CIDADE": "SALVADOR", "vol": 1764, "fat": 741862.326295946}, {"ano": 2026, "CIDADE": "SAO BERNARDO DO CAMPO", "vol": 665, "fat": 207860.106484}, {"ano": 2026, "CIDADE": "SAO PAULO", "vol": 7718, "fat": 2427688.4044770002}, {"ano": 2026, "CIDADE": "SOROCABA", "vol": 501, "fat": 174012.25}, {"ano": 2026, "CIDADE": "TERESINA", "vol": 702, "fat": 170596.0031}], "divisao": [{"ano": 2025, "DIVISAO_NEGOCIO": "VENDAS DIGITAL", "vol": 89566}, {"ano": 2026, "DIVISAO_NEGOCIO": "VENDAS DIGITAL", "vol": 47059}], "mes_nome": {"1": "Jan", "2": "Fev", "3": "Mar", "4": "Abr", "5": "Mai", "6": "Jun", "7": "Jul", "8": "Ago", "9": "Set", "10": "Out", "11": "Nov", "12": "Dez"}, "meta": {"total_rows": 136625, "ufs": ["-", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO"]}};
+const MES = D.mes_nome;
+const C = {b25:'#1f7ae0', b26:'#ff7a00', navy:'#0b1f3a', set:['#1f7ae0','#ff7a00','#0b1f3a','#16a34a','#9333ea','#0891b2','#dc2626','#ca8a04','#64748b','#db2777','#15803d','#7c3aed','#0d9488']};
+const fmtN = v => Math.round(v).toLocaleString('pt-BR');
+const fmtR = v => 'R$ '+(v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0));
+const fmtRf = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const fmtPct = v => (v>=0?'+':'')+v.toFixed(1)+'%';
+
+Chart.defaults.font.family='-apple-system,Segoe UI,Roboto,sans-serif';
+Chart.defaults.font.size=11;
+
+let charts={};
+function rows(){return D._rows;}
+
+// Build a per-row mini dataset for filtering by UF/Canal we need raw-ish; we only have aggregates.
+// We have canal aggregated by ano (no UF cross). For UF filter we use uf aggregate; canal filter uses canal aggregate.
+// KPIs/monthly reflect global unless UF chosen -> approximate via uf aggregate for volume/fat (no monthly-by-uf available).
+// To keep correctness: UF filter affects KPIs(vol/fat) + UF/cidade charts conceptually; monthly stays global with note.
+
+function ufList(){return [...new Set(D.uf.map(r=>r.UF))].sort();}
+function canalList(){return [...new Set(D.canal.map(r=>r.CANAL))].sort();}
+
+function initFilters(){
+  const u=document.getElementById('fUF'); u.innerHTML='<option value="">Todas UFs</option>'+ufList().map(x=>`<option>${x}</option>`).join('');
+  const c=document.getElementById('fCanal'); c.innerHTML='<option value="">Todos Canais</option>'+canalList().map(x=>`<option>${x}</option>`).join('');
+  u.onchange=render; c.onchange=render; document.getElementById('fComp').onchange=render;
+}
+
+function aggForKPI(){
+  const uf=document.getElementById('fUF').value;
+  const cn=document.getElementById('fCanal').value;
+  // If a filter is active, derive vol/fat from the matching aggregate. UF takes priority for fat; if both, intersect not available -> use min logic w/ note.
+  let res={2025:{vol:0,fat:0},2026:{vol:0,fat:0}};
+  if(cn){
+    D.canal.filter(r=>r.CANAL===cn).forEach(r=>{res[r.ano].vol+=r.vol;res[r.ano].fat+=r.fat;});
+  } else if(uf){
+    D.uf.filter(r=>r.UF===uf).forEach(r=>{res[r.ano].vol+=r.vol;res[r.ano].fat+=r.fat;});
+  } else {
+    // global from monthly
+    D.monthly.forEach(r=>{res[r.ano].vol+=r.vol;res[r.ano].fat+=r.fat;});
+  }
+  return res;
+}
+
+function renderKPIs(){
+  const comp=document.getElementById('fComp').value;
+  const uf=document.getElementById('fUF').value, cn=document.getElementById('fCanal').value;
+  let v25,v26,f25,f26,t25,t26,label;
+  if(!uf && !cn && comp==='ytd'){
+    v25=D.ytd['2025'].vol; v26=D.ytd['2026'].vol; f25=D.ytd['2025'].fat; f26=D.ytd['2026'].fat;
+    t25=D.ytd['2025'].ticket; t26=D.ytd['2026'].ticket; label='YTD Jan–Mai';
+  } else if(!uf && !cn && comp==='full'){
+    v25=D.fullyear2025.vol; f25=D.fullyear2025.fat; t25=D.fullyear2025.ticket;
+    const a=aggForKPI(); v26=a[2026].vol; f26=a[2026].fat; t26=f26/v26; label='2026 parcial vs 2025 cheio';
+  } else {
+    const a=aggForKPI(); v25=a[2025].vol; v26=a[2026].vol; f25=a[2025].fat; f26=a[2026].fat;
+    t25=v25?f25/v25:0; t26=v26?f26/v26:0; label='Filtrado (acumulado ano)';
+  }
+  const set=(id,val,c25,c26,fmt)=>{
+    document.getElementById(id).textContent=fmt(val);
+  };
+  document.getElementById('kVol').textContent=fmtN(v26);
+  document.getElementById('kFat').textContent=fmtR(f26);
+  document.getElementById('kTk').textContent=fmtRf(t26);
+  document.getElementById('kTot').textContent=fmtN(v25+v26);
+  const ch=(id,cur,prev)=>{const e=document.getElementById(id);if(!prev){e.textContent='';return;}const p=(cur-prev)/prev*100;e.className='chg '+(p>=0?'pos':'neg');e.innerHTML=fmtPct(p)+' <span class="muted">vs '+(comp==='full'&&!uf&&!cn?'2025 cheio':'2025')+'</span>';};
+  ch('kVolC',v26,v25); ch('kFatC',f26,f25); ch('kTkC',t26,t25);
+  document.getElementById('kTotC').textContent=label;
+  document.getElementById('noteBox').innerHTML = '<strong>Comparação:</strong> '+label+'. '+(comp==='ytd'?'2025 cheio = '+fmtN(D.fullyear2025.vol)+' vendas / '+fmtR(D.fullyear2025.fat)+'. ':'')+'Gráficos mensais sempre mostram a série completa.'+((uf||cn)?' <strong>Filtro ativo</strong> — KPIs refletem o acumulado do ano para o filtro selecionado.':'');
+}
+
+function mk(id,cfg){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id),cfg);}
+const months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+function monthSeries(field){
+  const s={2025:Array(12).fill(null),2026:Array(12).fill(null)};
+  D.monthly.forEach(r=>{s[r.ano][r.mes-1]=field==='ticket'?r.fat/r.vol:r[field];});
+  return s;
+}
+function baseOpts(yfmt){return {responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:12,padding:14}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+yfmt(c.parsed.y)}}},scales:{y:{ticks:{callback:yfmt},grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}};}
+
+function renderMonthly(){
+  const v=monthSeries('vol');
+  mk('chVolMes',{type:'line',data:{labels:months,datasets:[
+    {label:'2025',data:v[2025],borderColor:C.b25,backgroundColor:C.b25+'22',borderWidth:2,tension:.3,fill:true,pointRadius:3},
+    {label:'2026',data:v[2026],borderColor:C.b26,backgroundColor:C.b26+'22',borderWidth:2,tension:.3,fill:true,pointRadius:3}
+  ]},options:baseOpts(fmtN)});
+  const f=monthSeries('fat');
+  mk('chFatMes',{type:'bar',data:{labels:months,datasets:[
+    {label:'2025',data:f[2025],backgroundColor:C.b25},
+    {label:'2026',data:f[2026],backgroundColor:C.b26}
+  ]},options:baseOpts(fmtR)});
+  const t=monthSeries('ticket');
+  mk('chTkMes',{type:'line',data:{labels:months,datasets:[
+    {label:'2025',data:t[2025],borderColor:C.b25,borderWidth:2,tension:.3,pointRadius:3},
+    {label:'2026',data:t[2026],borderColor:C.b26,borderWidth:2,tension:.3,pointRadius:3}
+  ]},options:baseOpts(v=>'R$ '+v.toFixed(0))});
+}
+
+function dualBar(id,recs,catKey,valKey,yfmt,horizontal,sortByTotal){
+  const cats=[...new Set(recs.map(r=>r[catKey]))];
+  const m={2025:{},2026:{}};
+  recs.forEach(r=>{m[r.ano][r[catKey]]=(m[r.ano][r[catKey]]||0)+r[valKey];});
+  let ordered=cats;
+  if(sortByTotal) ordered=cats.sort((a,b)=>((m[2025][b]||0)+(m[2026][b]||0))-((m[2025][a]||0)+(m[2026][a]||0)));
+  mk(id,{type:'bar',data:{labels:ordered,datasets:[
+    {label:'2025',data:ordered.map(c=>m[2025][c]||0),backgroundColor:C.b25},
+    {label:'2026',data:ordered.map(c=>m[2026][c]||0),backgroundColor:C.b26}
+  ]},options:{indexAxis:horizontal?'y':'x',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:12,padding:12}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+yfmt(c.parsed[horizontal?'x':'y'])}}},scales:{[horizontal?'x':'y']:{ticks:{callback:yfmt},grid:{color:'#f1f5f9'}},[horizontal?'y':'x']:{grid:{display:false},ticks:{font:{size:10}}}}}});
+}
+
+function renderBreakdowns(){
+  const cn=document.getElementById('fCanal').value;
+  const uf=document.getElementById('fUF').value;
+  dualBar('chCanal',D.canal,'CANAL','vol',fmtN,true,true);
+  let plano=D.plano; dualBar('chPlano',plano,'plano_grp','vol',fmtN,true,true);
+  dualBar('chFaixa',D.faixa,'faixa','vol',fmtN,false,false);
+  let ufr=D.uf.filter(r=>r.UF && r.UF!=='-');
+  // top 12 uf
+  const tot={};ufr.forEach(r=>tot[r.UF]=(tot[r.UF]||0)+r.vol);
+  const topU=Object.keys(tot).sort((a,b)=>tot[b]-tot[a]).slice(0,12);
+  dualBar('chUF',ufr.filter(r=>topU.includes(r.UF)),'UF','vol',fmtN,false,true);
+  let cid=D.cidade; const tc={};cid.forEach(r=>tc[r.CIDADE]=(tc[r.CIDADE]||0)+r.vol);
+  const topC=Object.keys(tc).sort((a,b)=>tc[b]-tc[a]).slice(0,12);
+  dualBar('chCidade',cid.filter(r=>topC.includes(r.CIDADE)),'CIDADE','vol',fmtN,true,true);
+}
+
+let tblData=[],sortK='dv',sortAsc=false;
+function buildTable(){
+  const make=(dim,recs,catKey)=>{
+    const cats=[...new Set(recs.map(r=>r[catKey]))];
+    return cats.map(c=>{
+      const r25=recs.find(r=>r.ano===2025&&r[catKey]===c)||{vol:0,fat:0};
+      const r26=recs.find(r=>r.ano===2026&&r[catKey]===c)||{vol:0,fat:0};
+      return {dim,cat:c,v25:r25.vol,v26:r26.vol,dv:r25.vol?(r26.vol-r25.vol)/r25.vol*100:0,f25:r25.fat||0,f26:r26.fat||0,df:(r25.fat)?(r26.fat-r25.fat)/r25.fat*100:0};
+    });
+  };
+  tblData=[...make('Canal',D.canal,'CANAL'),...make('Plano',D.plano,'plano_grp'),...make('Faixa Etária',D.faixa,'faixa'),...make('UF',D.uf.filter(r=>r.UF&&r.UF!=='-'),'UF')];
+  drawTable();
+}
+function drawTable(){
+  const tb=document.querySelector('#tbl tbody');
+  const d=[...tblData].sort((a,b)=>{let x=a[sortK],y=b[sortK];if(typeof x==='string')return sortAsc?x.localeCompare(y):y.localeCompare(x);return sortAsc?x-y:y-x;});
+  tb.innerHTML=d.map(r=>{
+    const dvc=r.dv>=0?'pos':'neg',dfc=r.df>=0?'pos':'neg';
+    return `<tr><td><span class="badge ${r.dim==='Canal'?'b25':'b26'}">${r.dim}</span></td><td>${r.cat}</td>
+    <td class="num">${fmtN(r.v25)}</td><td class="num">${fmtN(r.v26)}</td>
+    <td class="num" style="color:${r.dv>=0?'#16a34a':'#dc2626'}">${fmtPct(r.dv)}</td>
+    <td class="num">${fmtRf(r.f25)}</td><td class="num">${fmtRf(r.f26)}</td>
+    <td class="num" style="color:${r.df>=0?'#16a34a':'#dc2626'}">${fmtPct(r.df)}</td></tr>`;
+  }).join('');
+}
+document.querySelectorAll('#tbl thead th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(sortK===k)sortAsc=!sortAsc;else{sortK=k;sortAsc=false;}drawTable();});
+
+function render(){renderKPIs();renderMonthly();renderBreakdowns();}
+initFilters();render();buildTable();
+</script>
+</body>
+</html>
