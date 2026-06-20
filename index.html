@@ -383,165 +383,6 @@ footer{text-align:center;color:var(--txt2);font-size:12px;padding:16px}
 
 </div>
 
-<script>
-const D={
- meses:["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
- real25:{Individual:[4095,3906,4467,4475,4721,5098,5745,5502,6443,6356,5096,4180],SS_PME:[985,1079,1203,1366,1553,2147,2423,3000,2756,2669,2970,2700],Adesao:[0,0,0,0,0,0,0,0,0,0,0,0],Total:[5080,4985,5670,5841,6274,7245,8168,8502,9199,9025,8066,6880]},
- real26:{Individual:[4980,4395,6042,5578,6374,null,null,null,null,null,null,null],SS_PME:[3280,3192,4520,3300,3727,null,null,null,null,null,null,null],Adesao:[50,110,260,119,464,null,null,null,null,null,null,null],Total:[8310,7621,10822,8997,10565,12360,null,null,null,null,null,null]},
- corretoras26:[990,1127,1577,1247,1099,1278,null,null,null,null,null,null],
- meta26:[9450,9990,10800,11210,11600,12360,12540,12570,12725,13300,13875,14125]
-};
-const NAVY='#003B71',ORANGE='#F58220',ORANGE2='#FFB066',GREEN='#1FA971',RED='#E0454D',GRAY='#9AA7B5';
-const fmt=n=>n==null?'—':Math.round(n).toLocaleString('pt-BR');
-const pct=n=>n==null?'—':(n*100).toFixed(1)+'%';
-const lastReal=D.real26.Total.filter(v=>v!=null).length-1; // index 4 (Mai)
-
-const selMes=document.getElementById('fMes');
-D.meses.forEach((m,i)=>{const o=document.createElement('option');o.value=i;o.textContent=m;if(i===lastReal)o.selected=true;selMes.appendChild(o);});
-
-let charts={};
-function sumTo(arr,upto){let s=0;for(let i=0;i<=upto;i++)if(arr[i]!=null)s+=arr[i];return s;}
-
-function render(){
- const upto=+selMes.value;
- const visao=document.getElementById('fVisao').value;
- // realizado series depend on selected visão
- const r26arr=D.real26.Total.map((v,i)=>v==null?null:(visao==='total'?v+(D.corretoras26[i]||0):v));
- // accumulated
- const real26Acc=sumTo(r26arr,upto);
- const meta26Acc=sumTo(D.meta26,upto);
- const real25Acc=sumTo(D.real25.Total,upto);
- const ating=meta26Acc?real26Acc/meta26Acc:0;
- const var2625=real25Acc?(real26Acc-real25Acc)/real25Acc:0;
- const gap=real26Acc-meta26Acc;
-
- // KPIs
- const kpis=[
-  {l:'Realizado 2026 (acum.)',v:fmt(real26Acc),c:`vs 2025: ${var2625>=0?'+':''}${pct(var2625)}`,cc:var2625>=0?'pos':'neg'},
-  {l:'Meta 2026 (acum.)',v:fmt(meta26Acc),c:`Orçado até ${D.meses[upto]}`,cc:''},
-  {l:'Atingimento da meta',v:pct(ating),c:`Gap: ${gap>=0?'+':''}${fmt(gap)} vidas`,cc:gap>=0?'pos':'neg'},
-  {l:'Realizado 2025 (acum.)',v:fmt(real25Acc),c:`Base comparativa`,cc:''},
- ];
- document.getElementById('kpis').innerHTML=kpis.map(k=>`<div class="kpi"><div class="lbl">${k.l}</div><div class="val">${k.v}</div><div class="chg ${k.cc}">${k.c}</div></div>`).join('');
-
- // labels up to selected
- const L=D.meses.slice(0,upto+1);
- const meta=D.meta26.slice(0,upto+1);
- const r26=r26arr.slice(0,upto+1);
- const r25=D.real25.Total.slice(0,upto+1);
- const lblReal=visao==='total'?'Realizado 2026 (HapOn+Corret.)':'Realizado 2026 (HapOn)';
-
- // Chart 1: Meta vs Real (bar+line)
- mk('cMeta','bar',{labels:L,datasets:[
-   {label:'Meta 2026',data:meta,backgroundColor:'#CBD8E6',borderRadius:5,order:2},
-   {label:lblReal,data:r26,backgroundColor:ORANGE,borderRadius:5,order:1},
- ]},{layout:{padding:{top:22}},plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:{color:'#EEF2F6'}},x:{grid:{display:false}}}},
-   [{id:'barlabels2',afterDatasetsDraw(c){const{ctx}=c;ctx.save();ctx.font='700 10px sans-serif';ctx.textAlign='center';c.data.datasets.forEach((ds,di)=>{ctx.fillStyle=di===1?'#C25E00':'#5B6B7C';const meta=c.getDatasetMeta(di);meta.data.forEach((bar,bi)=>{const val=ds.data[bi];if(val==null)return;ctx.fillText(fmt(val),bar.x,bar.y-5);});});ctx.restore();}}]);
- const dispo=r26arr.filter(v=>v!=null).length;
- document.getElementById('noteMeta').textContent=`Realizado disponível até ${D.meses[dispo-1]}/2026. Meses seguintes mostram apenas a meta.`;
-
- // Chart 2: gauge (doughnut)
- const a=Math.min(ating,1.5);
- mk('cGauge','doughnut',{labels:['Atingido','Faltante'],datasets:[{data:[Math.min(ating,1)*100,Math.max(0,(1-ating))*100],backgroundColor:[ating>=1?GREEN:ORANGE,'#EDF1F5'],borderWidth:0}]},
-   {cutout:'72%',rotation:-90,circumference:180,plugins:{legend:{display:false},tooltip:{enabled:false}}},
-   [{id:'ctr',afterDraw(c){const{ctx,chartArea}=c;ctx.save();const x=(chartArea.left+chartArea.right)/2,y=chartArea.bottom-10;ctx.textAlign='center';ctx.fillStyle=ating>=1?GREEN:ORANGE;ctx.font='800 30px sans-serif';ctx.fillText(pct(ating),x,y);ctx.fillStyle='#6B7785';ctx.font='600 12px sans-serif';ctx.fillText('da meta acumulada',x,y+20);ctx.restore();}}]);
-
- // Chart 3: comp 26 vs 25 line
- mk('cComp','line',{labels:D.meses,datasets:[
-   {label:lblReal,data:r26arr,borderColor:ORANGE,backgroundColor:ORANGE+'22',borderWidth:3,tension:.3,pointRadius:4,fill:true,spanGaps:false},
-   {label:'Realizado 2025',data:D.real25.Total,borderColor:NAVY,backgroundColor:'transparent',borderWidth:2,borderDash:[5,4],tension:.3,pointRadius:3},
- ]},{plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:{color:'#EEF2F6'}},x:{grid:{display:false}}}});
-
- // Chart 4: mix doughnut (acumulado por produto) — quebra por produto vai até Mai
- const uptoP=Math.min(upto,4);
- const mi=sumTo(D.real26.Individual,uptoP),ms=sumTo(D.real26.SS_PME,uptoP),ma=sumTo(D.real26.Adesao,uptoP);
- mk('cMix','doughnut',{labels:['Individual','SS | PME','Adesão'],datasets:[{data:[mi,ms,ma],backgroundColor:[NAVY,ORANGE,ORANGE2],borderWidth:2,borderColor:'#fff'}]},
-   {cutout:'58%',plugins:{legend:{position:'bottom'}}});
-
- // Chart 5: por produto 26 vs 25 (mesmo periodo acumulado)
- const prods=['Individual','SS_PME','Adesao'];
- const lbl=['Individual','SS | PME','Adesão'];
- const v26=prods.map(p=>sumTo(D.real26[p],uptoP));
- const v25=prods.map(p=>sumTo(D.real25[p],uptoP));
- mk('cProd','bar',{labels:lbl,datasets:[
-   {label:'Realizado 2025',data:v25,backgroundColor:NAVY,borderRadius:5},
-   {label:'Realizado 2026',data:v26,backgroundColor:ORANGE,borderRadius:5},
- ]},{layout:{padding:{top:24}},plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:{color:'#EEF2F6'}},x:{grid:{display:false}}}},
-   [{id:'barlabels',afterDatasetsDraw(c){const{ctx}=c;ctx.save();ctx.font='700 12px sans-serif';ctx.textAlign='center';ctx.fillStyle='#1A2733';c.data.datasets.forEach((ds,di)=>{const meta=c.getDatasetMeta(di);meta.data.forEach((bar,bi)=>{const val=ds.data[bi];if(val==null)return;ctx.fillText(fmt(val),bar.x,bar.y-6);});});ctx.restore();}}]);
-
- // Table
- let rows='';
- for(let i=0;i<=upto;i++){
-   const m=D.meta26[i],rr=r26arr[i],r5=D.real25.Total[i];
-   const at=rr!=null&&m?rr/m:null;
-   const g=rr!=null?rr-m:null;
-   const vv=rr!=null&&r5?(rr-r5)/r5:null;
-   rows+=`<tr><td>${D.meses[i]}</td><td>${fmt(m)}</td><td>${fmt(rr)}</td>
-   <td>${at==null?'—':`<span class="tag ${at>=1?'g':'r'}">${pct(at)}</span>`}</td>
-   <td class="${g>=0?'pos':'neg'}">${g==null?'—':(g>=0?'+':'')+fmt(g)}</td>
-   <td>${fmt(r5)}</td>
-   <td class="${vv>=0?'pos':'neg'}">${vv==null?'—':(vv>=0?'+':'')+pct(vv)}</td></tr>`;
- }
- const at=meta26Acc?real26Acc/meta26Acc:null;
- rows+=`<tr class="total"><td>Acumulado</td><td>${fmt(meta26Acc)}</td><td>${fmt(real26Acc)}</td>
-   <td>${pct(at)}</td><td class="${gap>=0?'pos':'neg'}">${(gap>=0?'+':'')+fmt(gap)}</td>
-   <td>${fmt(real25Acc)}</td><td class="${var2625>=0?'pos':'neg'}">${(var2625>=0?'+':'')+pct(var2625)}</td></tr>`;
- document.querySelector('#tbl tbody').innerHTML=rows;
-
- // ===== ANÁLISES =====
- renderAnalises(upto,visao,real26Acc,meta26Acc,real25Acc,ating,var2625,gap,r26arr);
-}
-
-function renderAnalises(upto,visao,real26Acc,meta26Acc,real25Acc,ating,var2625,gap,r26arr){
- const metaAno=D.meta26.reduce((a,b)=>a+b,0);
- const r25Ano=D.real25.Total.reduce((a,b)=>a+b,0);
- const exigeMais=metaAno-r25Ano;
- const exigePct=metaAno/r25Ano-1;
- const visaoTxt=visao==='total'?'HapOn + Corretoras':'HapOn';
- const mesAtual=D.meses[upto];
- const dispo=r26arr.filter(v=>v!=null).length-1; // último mês realizado
- const mesReal=D.meses[dispo];
-
- // ---- Análise 1: Meta 2026 x Realizado 2025 ----
- const a1=`
-  <p>A meta de vendas para <b>2026</b> é de <span class="hl">${fmt(metaAno)}</span> vidas no ano, contra um realizado de <span class="hl">${fmt(r25Ano)}</span> vidas em <b>2025</b> (ano cheio, HapOn). Ou seja, o orçamento exige um crescimento de <span class="hlg">+${pct(exigePct)}</span> — cerca de <b>${fmt(exigeMais)}</b> vidas a mais que o ano anterior.</p>
-  <ul>
-   <li>A meta sobe de forma <b>progressiva</b>: parte de ${fmt(D.meta26[0])} em Janeiro e chega a ${fmt(D.meta26[11])} em Dezembro (+${pct(D.meta26[11]/D.meta26[0]-1)} no ano), pressionando mais o 2º semestre.</li>
-   <li>No acumulado até <b>${mesAtual}</b>, a meta soma <b>${fmt(meta26Acc)}</b> vidas, enquanto 2025 realizou <b>${fmt(real25Acc)}</b> no mesmo período — a barra de 2026 está <span class="hl">${pct(meta26Acc/real25Acc-1)}</span> acima da base de 2025.</li>
-   <li>O realizado 2026 (${visaoTxt}) já cresce <span class="${var2625>=0?'hlg':'hlr'}">${var2625>=0?'+':''}${pct(var2625)}</span> sobre 2025 — ritmo ${var2625>=exigePct?'<b>acima</b>':'<b>abaixo</b>'} do salto de +${pct(exigePct)} que a meta anual demanda.</li>
-  </ul>
-  <div class="callout">A meta 2026 é ambiciosa: ${var2625>=exigePct?`o crescimento atual (${pct(var2625)}) já supera o exigido pela meta anual (${pct(exigePct)}), sinal positivo.`:`embora o crescimento real (${pct(var2625)}) seja forte, ainda está abaixo do +${pct(exigePct)} necessário para fechar o ano na meta.`}</div>`;
- document.getElementById('anaMeta').innerHTML=a1;
-
- // ---- Análise 2: Performance e o que falta ----
- const realAno=real26Acc; // acumulado até upto
- const falta=metaAno-realAno;
- const mesesRest=12-(dispo+1);
- const mediaNec=mesesRest>0?falta/mesesRest:0;
- const mediaReal=realAno/(dispo+1);
- const runrate=mediaReal*12;
- const statusGap=gap>=0;
- const a2=`
-  <p>No acumulado até <b>${mesReal}</b> (visão ${visaoTxt}), o realizado é de <span class="${statusGap?'hlg':'hlr'}">${fmt(real26Acc)}</span> vidas contra a meta de <b>${fmt(meta26Acc)}</b> — atingimento de <span class="${ating>=1?'hlg':'hl'}">${pct(ating)}</span> e gap de <span class="${statusGap?'hlg':'hlr'}">${statusGap?'+':''}${fmt(gap)}</span> vidas.</p>
-  <ul>
-   <li><b>Ritmo médio:</b> ${fmt(mediaReal)} vidas/mês realizadas até agora. Projetado para 12 meses (run-rate), chegaria a <b>${fmt(runrate)}</b> vidas — ${runrate>=metaAno?'<span class="hlg">acima</span>':'<span class="hlr">abaixo</span>'} da meta anual de ${fmt(metaAno)}.</li>
-   <li><b>O que falta:</b> para fechar 2026 na meta, faltam <span class="hl">${fmt(falta)}</span> vidas em ${mesesRest} ${mesesRest===1?'mês':'meses'} (Jul–Dez), o que exige <span class="hl">${fmt(mediaNec)}</span> vidas/mês.</li>
-   <li><b>Esforço adicional:</b> isso representa ${mediaNec>mediaReal?`<span class="hlr">+${pct(mediaNec/mediaReal-1)}</span> acima`:`<span class="hlg">${pct(mediaNec/mediaReal-1)}</span> em relação`} do ritmo médio atual de ${fmt(mediaReal)}/mês.</li>
-  </ul>
-  <div class="callout">${ating>=1
-    ? `Performance <b>na meta</b> no acumulado (${pct(ating)}). O desafio é sustentar o ritmo: a meta mensal sobe no 2º semestre, exigindo ~${fmt(mediaNec)} vidas/mês de Jul a Dez.`
-    : `Está <b>${pct(1-ating)} abaixo</b> da meta acumulada. Recuperar o gap de ${fmt(Math.abs(gap))} vidas e ainda cumprir a meta crescente do 2º semestre exige elevar o ritmo de ${fmt(mediaReal)} para ~${fmt(mediaNec)} vidas/mês. ${visao!=='total'?'Incluir Corretoras (filtro "Visão") melhora o atingimento.':'O canal de Corretoras já está somado nesta visão.'}`}</div>`;
- document.getElementById('anaPerf').innerHTML=a2;
-}
-
-function mk(id,type,data,opts,plugins){
- if(charts[id])charts[id].destroy();
- charts[id]=new Chart(document.getElementById(id),{type,data,options:Object.assign({responsive:true,maintainAspectRatio:true,animation:{duration:400}},opts),plugins:plugins||[]});
-}
-selMes.onchange=render;
-document.getElementById('fVisao').onchange=render;
-render();
-</script>
 </div>
 <footer>Base: BASE_DATALAKE_0806 · 139.344 registros · Diretoria Vendas Digital. 2026 inclui Jan–Mai completos (+ fragmento parcial de Jun). Cancelamento = registros com data de cancelamento preenchida.</footer>
 </div>
@@ -1188,7 +1029,13 @@ $('btnCanc').onclick=()=>{$('cancOverlay').classList.add('open');setTimeout(rend
 $('cancClose').onclick=()=>$('cancOverlay').classList.remove('open');
 $('cancOverlay').onclick=(e)=>{if(e.target===$('cancOverlay'))$('cancOverlay').classList.remove('open');};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('diagOverlay').classList.remove('open');$('cancOverlay').classList.remove('open');}});
-setTimeout(()=>{render();$('loading').style.display='none';},30);
+setTimeout(()=>{
+  try{render();}catch(e){
+    console.error('Erro ao renderizar dashboard:',e);
+    $('loading').innerHTML='<span style="color:#dc2626">Erro ao carregar: '+e.message+'</span>';
+  }
+  $('loading').style.display='none';
+},30);
 </script>
 
 <style id="orcStyle">
@@ -1271,7 +1118,6 @@ const orcPct=n=>n==null?'—':(n*100).toFixed(1)+'%';
 const orcLastReal=orcD.real26.Total.filter(v=>v!=null).length-1; // index 4 (Mai)
 
 const orcSelMes=document.getElementById('orc_fMes');
-D.meses.forEach((m,i)=>{const o=document.createElement('option');o.value=i;o.textContent=m;if(i===orcLastReal)o.selected=true;orcSelMes.appendChild(o);});
 
 let orcCharts={};
 function orcSumTo(arr,upto){let s=0;for(let i=0;i<=upto;i++)if(arr[i]!=null)s+=arr[i];return s;}
@@ -1292,7 +1138,7 @@ function orcRender(){
  // KPIs
  const kpis=[
   {l:'Realizado 2026 (acum.)',v:orcFmt(real26Acc),c:`vs 2025: ${var2625>=0?'+':''}${orcPct(var2625)}`,cc:var2625>=0?'pos':'neg'},
-  {l:'Meta 2026 (acum.)',v:orcFmt(meta26Acc),c:`Orçado até ${D.meses[upto]}`,cc:''},
+  {l:'Meta 2026 (acum.)',v:orcFmt(meta26Acc),c:`Orçado até ${orcD.meses[upto]}`,cc:''},
   {l:'Atingimento da meta',v:orcPct(ating),c:`Gap: ${gap>=0?'+':''}${orcFmt(gap)} vidas`,cc:gap>=0?'pos':'neg'},
   {l:'Realizado 2025 (acum.)',v:orcFmt(real25Acc),c:`Base comparativa`,cc:''},
  ];
@@ -1312,7 +1158,7 @@ function orcRender(){
  ]},{layout:{padding:{top:22}},plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:{color:'#EEF2F6'}},x:{grid:{display:false}}}},
    [{id:'barlabels2',afterDatasetsDraw(c){const{ctx}=c;ctx.save();ctx.font='700 10px sans-serif';ctx.textAlign='center';c.data.datasets.forEach((ds,di)=>{ctx.fillStyle=di===1?'#C25E00':'#5B6B7C';const meta=c.getDatasetMeta(di);meta.data.forEach((bar,bi)=>{const val=ds.data[bi];if(val==null)return;ctx.fillText(orcFmt(val),bar.x,bar.y-5);});});ctx.restore();}}]);
  const dispo=r26arr.filter(v=>v!=null).length;
- document.getElementById('orc_noteMeta').textContent=`Realizado disponível até ${D.meses[dispo-1]}/2026. Meses seguintes mostram apenas a meta.`;
+ document.getElementById('orc_noteMeta').textContent=`Realizado disponível até ${orcD.meses[dispo-1]}/2026. Meses seguintes mostram apenas a meta.`;
 
  // Chart 2: gauge (doughnut)
  const a=Math.min(ating,1.5);
@@ -1321,9 +1167,9 @@ function orcRender(){
    [{id:'ctr',afterDraw(c){const{ctx,chartArea}=c;ctx.save();const x=(chartArea.left+chartArea.right)/2,y=chartArea.bottom-10;ctx.textAlign='center';ctx.fillStyle=ating>=1?GREEN:ORANGE;ctx.font='800 30px sans-serif';ctx.fillText(orcPct(ating),x,y);ctx.fillStyle='#6B7785';ctx.font='600 12px sans-serif';ctx.fillText('da meta acumulada',x,y+20);ctx.restore();}}]);
 
  // Chart 3: comp 26 vs 25 line
- orcMk('orc_cComp','line',{labels:D.meses,datasets:[
+ orcMk('orc_cComp','line',{labels:orcD.meses,datasets:[
    {label:lblReal,data:r26arr,borderColor:ORANGE,backgroundColor:ORANGE+'22',borderWidth:3,tension:.3,pointRadius:4,fill:true,spanGaps:false},
-   {label:'Realizado 2025',data:D.real25.Total,borderColor:NAVY,backgroundColor:'transparent',borderWidth:2,borderDash:[5,4],tension:.3,pointRadius:3},
+   {label:'Realizado 2025',data:orcD.real25.Total,borderColor:NAVY,backgroundColor:'transparent',borderWidth:2,borderDash:[5,4],tension:.3,pointRadius:3},
  ]},{plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:{color:'#EEF2F6'}},x:{grid:{display:false}}}});
 
  // Chart 4: mix doughnut (acumulado por produto) — quebra por produto vai até Mai
@@ -1350,7 +1196,7 @@ function orcRender(){
    const at=rr!=null&&m?rr/m:null;
    const g=rr!=null?rr-m:null;
    const vv=rr!=null&&r5?(rr-r5)/r5:null;
-   rows+=`<tr><td>${D.meses[i]}</td><td>${orcFmt(m)}</td><td>${orcFmt(rr)}</td>
+   rows+=`<tr><td>${orcD.meses[i]}</td><td>${orcFmt(m)}</td><td>${orcFmt(rr)}</td>
    <td>${at==null?'—':`<span class="tag ${at>=1?'g':'r'}">${orcPct(at)}</span>`}</td>
    <td class="${g>=0?'pos':'neg'}">${g==null?'—':(g>=0?'+':'')+orcFmt(g)}</td>
    <td>${orcFmt(r5)}</td>
@@ -1380,7 +1226,7 @@ function orcRenderAnalises(upto,visao,real26Acc,meta26Acc,real25Acc,ating,var262
  const a1=`
   <p>A meta de vendas para <b>2026</b> é de <span class="hl">${orcFmt(metaAno)}</span> vidas no ano, contra um realizado de <span class="hl">${orcFmt(r25Ano)}</span> vidas em <b>2025</b> (ano cheio, HapOn). Ou seja, o orçamento exige um crescimento de <span class="hlg">+${orcPct(exigePct)}</span> — cerca de <b>${orcFmt(exigeMais)}</b> vidas a mais que o ano anterior.</p>
   <ul>
-   <li>A meta sobe de forma <b>progressiva</b>: parte de ${orcFmt(orcD.meta26[0])} em Janeiro e chega a ${orcFmt(orcD.meta26[11])} em Dezembro (+${orcPct(orcD.meta26[11]/D.meta26[0]-1)} no ano), pressionando mais o 2º semestre.</li>
+   <li>A meta sobe de forma <b>progressiva</b>: parte de ${orcFmt(orcD.meta26[0])} em Janeiro e chega a ${orcFmt(orcD.meta26[11])} em Dezembro (+${orcPct(orcD.meta26[11]/orcD.meta26[0]-1)} no ano), pressionando mais o 2º semestre.</li>
    <li>No acumulado até <b>${mesAtual}</b>, a meta soma <b>${orcFmt(meta26Acc)}</b> vidas, enquanto 2025 realizou <b>${orcFmt(real25Acc)}</b> no mesmo período — a barra de 2026 está <span class="hl">${orcPct(meta26Acc/real25Acc-1)}</span> acima da base de 2025.</li>
    <li>O realizado 2026 (${visaoTxt}) já cresce <span class="${var2625>=0?'hlg':'hlr'}">${var2625>=0?'+':''}${orcPct(var2625)}</span> sobre 2025 — ritmo ${var2625>=exigePct?'<b>acima</b>':'<b>abaixo</b>'} do salto de +${orcPct(exigePct)} que a meta anual demanda.</li>
   </ul>
