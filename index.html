@@ -386,7 +386,7 @@ footer{text-align:center;color:var(--txt2);font-size:12px;padding:16px}
 
 <div class="row">
   <div class="card">
-    <h3><span class="dot"></span>Realizado 2026 por produto vs 2025 (acum. até Mai)</h3>
+    <h3><span class="dot"></span>Realizado 2026 por produto vs 2025 (acumulado no período) · % = participação no total de vendas do ano</h3>
     <canvas id="orc_cProd"></canvas>
   </div>
 </div>
@@ -1436,8 +1436,8 @@ function orcRender(){
  orcMk('orc_cProd','bar',{labels:lbl,datasets:[
    {label:'Realizado 2025',data:v25,backgroundColor:NAVY,borderRadius:5},
    {label:'Realizado 2026',data:v26,backgroundColor:ORANGE,borderRadius:5},
- ]},{layout:{padding:{top:24}},plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:{color:'#EEF2F6'}},x:{grid:{display:false}}}},
-   [{id:'barlabels',afterDatasetsDraw(c){const{ctx}=c;ctx.save();ctx.font='700 12px sans-serif';ctx.textAlign='center';ctx.fillStyle='#1A2733';c.data.datasets.forEach((ds,di)=>{const meta=c.getDatasetMeta(di);meta.data.forEach((bar,bi)=>{const val=ds.data[bi];if(val==null)return;ctx.fillText(orcFmt(val),bar.x,bar.y-6);});});ctx.restore();}}]);
+ ]},{layout:{padding:{top:36}},plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:{color:'#EEF2F6'}},x:{grid:{display:false}}}},
+   [{id:'barlabels',afterDatasetsDraw(c){const{ctx}=c;ctx.save();ctx.textAlign='center';const tots=c.data.datasets.map(ds=>ds.data.reduce((s,v)=>s+(v||0),0));c.data.datasets.forEach((ds,di)=>{const meta=c.getDatasetMeta(di);meta.data.forEach((bar,bi)=>{const val=ds.data[bi];if(val==null)return;ctx.font='700 12px sans-serif';ctx.fillStyle='#1A2733';ctx.fillText(orcFmt(val),bar.x,bar.y-19);const sh=tots[di]?val/tots[di]*100:0;ctx.font='700 10px sans-serif';ctx.fillStyle=di===0?'#5B7185':'#C05621';ctx.fillText(sh.toFixed(1)+'% do total',bar.x,bar.y-6);});});ctx.restore();}}]);
 
  // Table
  let rows='';
