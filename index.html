@@ -1108,13 +1108,15 @@ function buildCanalMes(){
   const tb=document.querySelector('#tblCanalMes tbody'); if(!tb) return;
   const rows=chartRows();
   const mesesList=isMeses()?[...selMeses].sort((a,b)=>a-b):(isJM()?[1,2,3,4,5,6,7]:Array.from({length:12},(_,i)=>i+1));
-  document.querySelector('#tblCanalMes thead').innerHTML='<tr><th>Canal</th><th>Ano</th>'+mesesList.map(m=>'<th class="num">'+MESNOMES[m-1]+'</th>').join('')+'<th class="num">Total</th></tr>';
+  document.querySelector('#tblCanalMes thead').innerHTML='<tr><th>Canal</th><th>Ano</th>'+mesesList.map(m=>'<th class="num">'+MESNOMES[m-1]+'</th>').join('')+'<th class="num">Total</th><th class="num">% do ano</th></tr>';
   const agg={};
   for(const r of rows){const c=r[2],s=seriesKey(r),m=r[1];const oc=agg[c]=agg[c]||{};const os=oc[s]=oc[s]||{};os[m]=(os[m]||0)+1;}
   const lA=seriesA(),lB=seriesB();
   const totalOf=c=>[0,1].reduce((s,sr)=>s+Object.values((agg[c]||{})[sr]||{}).reduce((u,v)=>u+v,0),0);
   const canais=Object.keys(agg).map(Number).sort((a,b)=>totalOf(b)-totalOf(a));
-  const ncols=mesesList.length+3;
+  const ncols=mesesList.length+4;
+  const grand={0:0,1:0};
+  canais.forEach(c=>[0,1].forEach(s=>{const mm=(agg[c]||{})[s];if(mm)grand[s]+=mesesList.reduce((a,m)=>a+(mm[m]||0),0);}));
   let html='';
   const totS={0:{},1:{}};
   canais.forEach(c=>{
@@ -1122,14 +1124,14 @@ function buildCanalMes(){
       const mm=(agg[c]||{})[s]; if(!mm) return;
       const tot=mesesList.reduce((a,m)=>a+(mm[m]||0),0); if(!tot) return;
       mesesList.forEach(m=>{totS[s][m]=(totS[s][m]||0)+(mm[m]||0);});
-      html+='<tr><td><span class="badge b25">'+CATS.canal[c]+'</span></td><td style="font-weight:800;color:'+(s===0?C.b25:C.b26)+'">'+(s===0?lA:lB)+'</td>'+mesesList.map(m=>'<td class="num">'+(mm[m]?fmtN(mm[m]):'<span style="color:#cbd5e1">—</span>')+'</td>').join('')+'<td class="num" style="font-weight:800">'+fmtN(tot)+'</td></tr>';
+      html+='<tr><td><span class="badge b25">'+CATS.canal[c]+'</span></td><td style="font-weight:800;color:'+(s===0?C.b25:C.b26)+'">'+(s===0?lA:lB)+'</td>'+mesesList.map(m=>'<td class="num">'+(mm[m]?fmtN(mm[m]):'<span style="color:#cbd5e1">—</span>')+'</td>').join('')+'<td class="num" style="font-weight:800">'+fmtN(tot)+'</td><td class="num" style="font-weight:700;color:#0369a1">'+(grand[s]?(tot/grand[s]*100).toFixed(1):'0.0')+'%</td></tr>';
     });
   });
   tb.innerHTML=html||'<tr><td colspan="'+ncols+'" style="color:#64748b;padding:12px">Sem vendas no recorte selecionado.</td></tr>';
   let fh='';
   [0,1].forEach(s=>{
     const t=mesesList.reduce((a,m)=>a+(totS[s][m]||0),0); if(!t) return;
-    fh+='<tr><td style="font-weight:800">TOTAL '+(s===0?lA:lB)+'</td><td style="font-weight:800;color:'+(s===0?C.b25:C.b26)+'">'+(s===0?lA:lB)+'</td>'+mesesList.map(m=>'<td class="num" style="font-weight:800">'+fmtN(totS[s][m]||0)+'</td>').join('')+'<td class="num" style="font-weight:800">'+fmtN(t)+'</td></tr>';
+    fh+='<tr><td style="font-weight:800">TOTAL '+(s===0?lA:lB)+'</td><td style="font-weight:800;color:'+(s===0?C.b25:C.b26)+'">'+(s===0?lA:lB)+'</td>'+mesesList.map(m=>'<td class="num" style="font-weight:800">'+fmtN(totS[s][m]||0)+'</td>').join('')+'<td class="num" style="font-weight:800">'+fmtN(t)+'</td><td class="num" style="font-weight:800">100,0%</td></tr>';
   });
   ensureFoot('tblCanalMes').innerHTML=fh;
 }
