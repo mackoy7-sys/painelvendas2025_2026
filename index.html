@@ -247,7 +247,6 @@ footer{text-align:center;color:var(--txt2);font-size:12px;padding:16px}
       <input type="hidden" id="fComp" value="ytd">
       <div class="seg" id="segComp">
         <button type="button" data-v="ytd" class="active">YTD Jan–Jul</button>
-        <button type="button" data-v="jm">Jan–Jul/25 vs 26</button>
         <button type="button" data-v="meses">Meses 25×26 ▾</button>
         <button type="button" data-v="y2025">Ano 2025</button>
         <button type="button" data-v="y2026">Ano 2026</button>
@@ -456,7 +455,7 @@ function cnCode(){const v=$('fCanal').value;return v===''?-1:CATS.canal.indexOf(
 function isJM(){return $('fComp').value==='jm';}
 function isMeses(){return $('fComp').value==='meses';}
 // conjunto de meses selecionados (modo 'meses')
-let selMeses=new Set([1,2,3,4,5]);
+let selMeses=(()=>{const s=new Set();for(let i=0;i<ROWS.length;i++){if(ROWS[i][0]===1)s.add(ROWS[i][1]);}return s;})(); // meses com dados de 2026 na base
 // retorna 0 (=2025), 1 (=2026) ou -1 (ambos)
 function singleYear(){const v=$('fComp').value;return v==='y2025'?0:v==='y2026'?1:-1;}
 // aplica recorte de ano único, se houver
@@ -545,7 +544,8 @@ function renderKPIs(){
   ch('kVolC',v26,v25,fmtN);ch('kFatC',f26,f25,fmtR);ch('kTkC',t26,t25,fmtRf);
   $('kTotC').textContent=label+' · 2025: '+fmtN(v25)+' | 2026: '+fmtN(v26);
   if(isMeses()){
-    const faltam2026=[...selMeses].filter(m=>m>7);
+    const mp26=new Set();for(let i=0;i<ROWS.length;i++){if(ROWS[i][0]===1)mp26.add(ROWS[i][1]);}
+    const faltam2026=[...selMeses].filter(m=>!mp26.has(m));
     let aviso=faltam2026.length?' <strong style="color:#fca5a5">Atenção:</strong> 2026 tem dados completos até Julho (Agosto parcial) — meses selecionados após Jun não têm vendas em 2026, o que pode distorcer a comparação.':'';
     $('noteBox').innerHTML='<strong>Comparação por meses:</strong> '+mesesLabel()+' de 2025 × 2026. Todos os gráficos e tabelas seguem os meses escolhidos.'+aviso+(filtTxt?' <strong>Filtros:</strong> '+filtTxt+'.':'');
   } else
