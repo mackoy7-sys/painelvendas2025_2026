@@ -212,8 +212,11 @@ footer{text-align:center;color:var(--txt2);font-size:12px;padding:16px}
         </tr></thead><tbody></tbody></table></div>
       </div></section>
       <section class="row" style="margin-bottom:18px"><div class="card tall">
-        <h3>Curva de Permanência por Período — Safras 2025 × 2026</h3>
-        <div class="csub">Retenção mês a mês desde o cadastro, comparando as safras <b>2025 (azul)</b> × <b>2026 (laranja)</b> do recorte (Diretoria/UF/Canal + meses de venda selecionados) · a curva 2026 termina na maturidade que já atingiu · o filtro "Ano venda" não se aplica aqui — o gráfico compara os dois períodos</div>
+        <h3 style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">Curva de Permanência por Período — Safras 2025 × 2026
+          <label style="font-size:12px;font-weight:600;color:#475569;display:flex;align-items:center;gap:6px">Canal:
+            <select id="safraCurvaCanal" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:12px;max-width:260px"><option value="">Todos (segue filtro geral)</option></select>
+          </label></h3>
+        <div class="csub">Retenção mês a mês desde o cadastro, comparando as safras <b>2025 (azul)</b> × <b>2026 (laranja)</b> do recorte (Diretoria/UF/Canal + meses de venda selecionados) · o seletor <b>Canal</b> acima restringe só este gráfico (padrão: segue o filtro geral) · a curva 2026 termina na maturidade que já atingiu · o filtro "Ano venda" não se aplica aqui — o gráfico compara os dois períodos</div>
         <canvas id="chSafraCurva"></canvas>
         <div class="csub" style="margin-top:10px" id="safraCurvaNote"></div>
       </div></section>
@@ -1171,7 +1174,9 @@ function buildCanalMes(){
 function render(){renderKPIs();renderMonthly();renderBreakdowns();buildCanalTable();buildFaixaTable();buildCanalMes();buildTable();updateTableHeaders();buildDiagnosis();}
 function renderSafraCurva(){
   const el=$('chSafraCurva'); if(!el) return;
-  const dc=dirCode(),uc=ufCode(),cc=cnCode();
+  const dc=dirCode(),uc=ufCode();
+  const scSel=$('safraCurvaCanal');
+  const cc=(scSel&&scSel.value!=='')?+scSel.value:cnCode();
   const collect=(yr)=>{const out=[];for(let i=0;i<ROWS.length;i++){const r=ROWS[i];if(r[0]!==yr)continue;if(dc>=0&&r[4]!==dc)continue;if(uc>=0&&r[3]!==uc)continue;if(cc>=0&&r[2]!==cc)continue;if(cancSelMeses.size&&!cancSelMeses.has(r[1]))continue;out.push(r);}return out;};
   const c25=curvaRet(collect(0),12), c26=curvaRet(collect(1),12);
   const labels=Array.from({length:13},(_,m)=>'Mês '+m);
@@ -1192,6 +1197,10 @@ function renderSafraCurva(){
   } else nota+='sem idade comparável entre os períodos neste recorte.';
   $('safraCurvaNote').innerHTML=nota;
 }
+(function(){const s=$('safraCurvaCanal');if(!s)return;
+  CATS.canal.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c;s.appendChild(o);});
+  s.onchange=()=>renderSafraCurva();
+})();
 // ===== PONTE DA CARTEIRA (waterfall 2025 -> atual, vidas e R$) =====
 function ponteWaterfall(id,vals,money){
   const labels=['Carteira fim/2025','Vendas 2026','Cancel. 2026 (safra 25)','Cancel. (safra 26)','Carteira atual'];
