@@ -205,11 +205,12 @@ footer{text-align:center;color:var(--txt2);font-size:12px;padding:16px}
         <div class="csub" style="margin-top:10px" id="survNote"></div>
       </div></section>
       <section class="row" style="margin-bottom:18px"><div class="card">
-        <h3>Permanência por Safra de Vendas (mês de venda)</h3>
-        <div class="csub">% cancelado e ativo por mês de venda (safra), calculado pela <b>data real de cancelamento</b>. Reflete todos os filtros (Diretoria/UF/Canal + Ano/Mês de venda). ⚠ <b>% Permanência</b> é o acumulado até hoje — safras antigas tiveram mais tempo para cancelar. <b>Perm. 12m+</b> agora é <b>exata</b>: % ainda ativo ao completar 12 meses (só safras com ≥12m; demais mostram "— (Nm)" com a maturidade). <b>Safra 2025 mesmo mês (mesma idade)</b> = retenção real da safra 2025 do <b>mesmo mês</b>, medida na mesma idade da safra atual (ex.: Jan/2026 aos 7m × Jan/2025 aos 7m — mesma sazonalidade), no mesmo recorte de Diretoria/UF/Canal. Só para safras 2026 (as de 2025 não têm ano anterior na base → "—"). <b>Δ vs 2025</b> = diferença em pontos percentuais (verde = retendo melhor que a safra 2025 equivalente na mesma idade). No rodapé, quando o recorte tem os 2 anos: <b>TOTAL 2025</b> e <b>TOTAL 2026</b> do período selecionado + <b>TOTAL geral</b>; na linha TOTAL 2026, a referência é a média das safras 2025 equivalentes (mesma idade, ponderada pelo volume 2026) e o Δ compara os dois períodos em base equivalente.</div>
-        <div class="tbl-wrap" style="max-height:none"><table id="tblSafra"><thead><tr>
-          <th>Safra (mês/ano)</th><th class="num">Vendas</th><th class="num">Ativos</th><th class="num">Cancelados</th><th class="num">% Cancelamento</th><th class="num">% Permanência</th><th class="num">Safra 2025 mesmo mês (mesma idade)</th><th class="num">Δ vs 2025</th><th class="num">Perm. 12m+</th>
-        </tr></thead><tbody></tbody></table></div>
+        <h3 style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">Permanência por Safra de Vendas — matriz de coorte
+          <label style="font-size:12px;font-weight:600;color:#475569;display:flex;align-items:center;gap:6px">Canal:
+            <select id="safraCanal" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:12px;max-width:260px"><option value="">Todos (segue filtro geral)</option></select>
+          </label></h3>
+        <div class="csub">Cada linha é uma <b>safra</b> (mês de venda) e cada coluna a <b>idade em meses</b> desde o cadastro: a célula mostra o <b>% ainda ativo ao completar aquele mês</b>, pela data real de cancelamento (M0 = 100%). Célula vazia = idade que a safra ainda não atingiu. Quanto mais escuro o azul, maior a retenção — a leitura vertical compara safras na <b>mesma idade</b>. Reflete os filtros (Diretoria/UF + Ano/Mês de venda) e o seletor <b>Canal</b> acima (padrão: segue o filtro geral). No rodapé, <b>TOTAL 2025 / 2026 / geral</b> com a curva agregada do período (Kaplan-Meier, mesma dos gráficos).</div>
+        <div class="tbl-wrap" style="max-height:none"><table id="tblSafra"><thead></thead><tbody></tbody></table></div>
       </div></section>
       <section class="row" style="margin-bottom:18px"><div class="card tall">
         <h3 style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">Curva de Permanência por Período — Safras 2025 × 2026
@@ -1248,73 +1249,57 @@ function renderCanc(){['Dir','UF','Canal'].forEach(k=>{const o=$('cf'+k);if(o)o.
 // ===== Tabela de permanência por SAFRA de vendas (mês/ano) — calculada do RAW, respeita Dir/UF/Canal + Ano/Mês de venda =====
 function renderSafra(){
   const tb=document.querySelector('#tblSafra tbody'); if(!tb) return;
-  const rowsF=cancRows(true); // Dir/UF/Canal + Ano/Mês de venda
+  const sel=$('safraCanal');
+  const ccL=(sel&&sel.value!=='')?+sel.value:-1;
+  let rowsF=cancRows(ccL>=0?false:true);            // Dir/UF + Ano/Mês de venda (canal global só quando sem override)
+  if(ccL>=0) rowsF=rowsF.filter(r=>r[2]===ccL);
+  const MAXM=12;
+  const thead=document.querySelector('#tblSafra thead');
+  thead.innerHTML='<tr><th>Safra</th><th class="num">Vidas</th>'+Array.from({length:MAXM+1},(_,m)=>'<th class="num">M'+m+'</th>').join('')+'</tr>';
   const agg={};
   for(const r of rowsF){
     const ano=r[0]===0?2025:2026;const key=ano*100+r[1];
-    const o=agg[key]||(agg[key]={v:0,c:0,c12:0,ano:ano,mes:r[1]});
-    o.v++; if(r[9]===1)o.c++;
-    if(r[10]>=0&&r[10]<=12)o.c12++;
+    (agg[key]||(agg[key]={ano:ano,mes:r[1],rows:[]})).rows.push(r);
   }
-  const rows=Object.values(agg).sort((a,b)=>(a.ano-b.ano)||(a.mes-b.mes));
-  const cor=v=>v>=80?'#16a34a':v>=65?'#15803d':v>=50?'#ca8a04':'#dc2626';
-  if(!rows.length){tb.innerHTML='<tr><td colspan="9" style="color:#64748b;padding:14px">Sem vendas para os filtros selecionados.</td></tr>';const f=ensureFoot('tblSafra');if(f)f.innerHTML='';return;}
-  const mat=o=>REF_IDX-(o.ano*12+o.mes);
-  // referência: safra 2025 do MESMO MÊS, no mesmo recorte Dir/UF/Canal, medida na MESMA idade (só p/ safras 2026 — 2025 não tem ano anterior na base)
-  const dc=dirCode(),uc=ufCode(),cc=cnCode();
-  const rows25=[];
-  for(let i=0;i<ROWS.length;i++){const r=ROWS[i];
-    if(r[0]!==0)continue;
-    if(dc>=0&&r[4]!==dc)continue;
-    if(uc>=0&&r[3]!==uc)continue;
-    if(cc>=0&&r[2]!==cc)continue;
-    rows25.push(r);
-  }
-  const ref25=(mes,m)=>{let den=0,ok=0;for(const r of rows25){if(r[1]!==mes)continue;if(matMeses(r)<m)continue;den++;if(r[10]<0||r[10]>m)ok++;}return den?+(ok/den*100).toFixed(1):null;};
-  const enr=rows.map(o=>{const perm=o.v?(o.v-o.c)/o.v*100:0;const m=mat(o);const p12=o.v?(o.v-o.c12)/o.v*100:0;const refv=(o.ano===2026)?ref25(o.mes,m):null;return Object.assign({},o,{perm:perm,m:m,p12:p12,refv:refv,delta:refv!=null?perm-refv:null});});
-  tb.innerHTML=enr.map(o=>{
-    const c12=o.m>=12
-      ? `<td class="num" style="color:${cor(o.p12)};font-weight:700">${o.p12.toFixed(1)}%</td>`
-      : `<td class="num" style="color:#94a3b8">— <span style="font-size:10px">(${o.m}m)</span></td>`;
-    const cRef=o.refv!=null
-      ? `<td class="num" style="color:${cor(o.refv)};font-weight:600">${o.refv.toFixed(1)}%</td>`
-      : `<td class="num" style="color:#94a3b8">—</td>`;
-    const cDelta=o.delta!=null
-      ? `<td class="num" style="color:${o.delta>=0?'#16a34a':'#dc2626'};font-weight:700">${o.delta>=0?'+':''}${o.delta.toFixed(1)} pp</td>`
-      : `<td class="num" style="color:#94a3b8">—</td>`;
-    return `<tr>
-    <td><span class="badge b25">${MESNOMES[o.mes-1]}/${o.ano}</span></td>
-    <td class="num">${fmtN(o.v)}</td>
-    <td class="num" style="color:var(--navy);font-weight:700">${fmtN(o.v-o.c)}</td>
-    <td class="num">${fmtN(o.c)}</td>
-    <td class="num" style="color:#dc2626;font-weight:600">${(100-o.perm).toFixed(1)}%</td>
-    <td class="num" style="color:${cor(o.perm)};font-weight:700">${o.perm.toFixed(1)}%</td>
-    ${cRef}${cDelta}${c12}</tr>`;}).join('');
-  // rodapé: subtotal por período + comparação (2026 vs 2025 mesma idade, ponderada por volume) + total geral
-  const dash='<td class="num" style="color:#94a3b8">—</td>';
-  const totRow=(label,sub,strong,allowRef)=>{
-    const v=sub.reduce((s,o)=>s+o.v,0),c=sub.reduce((s,o)=>s+o.c,0),p=v?(v-c)/v*100:0;
-    const mr=sub.filter(o=>o.m>=12);const mv=mr.reduce((s,o)=>s+o.v,0),mc=mr.reduce((s,o)=>s+o.c12,0),mp=mv?(mv-mc)/mv*100:0;
-    const c12=mv?`<td class="num" style="font-weight:800;color:${cor(mp)}">${mp.toFixed(1)}%</td>`:dash;
-    let cref=dash,cd=dash;
-    if(allowRef){
-      const rr=sub.filter(o=>o.refv!=null);const rv=rr.reduce((s,o)=>s+o.v,0);
-      const wref=rv?rr.reduce((s,o)=>s+o.refv*o.v,0)/rv:null;
-      if(wref!=null){
-        cref=`<td class="num" style="font-weight:700;color:${cor(wref)}">${wref.toFixed(1)}%</td>`;
-        const d=p-wref;
-        cd=`<td class="num" style="font-weight:800;color:${d>=0?'#16a34a':'#dc2626'}">${d>=0?'+':''}${d.toFixed(1)} pp</td>`;
-      }
-    }
-    const fw=strong?'800':'700';
-    return `<tr style="${strong?'border-top:2px solid #cbd5e1':''}"><td style="font-weight:${fw}">${label}</td><td class="num" style="font-weight:${fw}">${fmtN(v)}</td><td class="num" style="font-weight:${fw};color:var(--navy)">${fmtN(v-c)}</td><td class="num" style="font-weight:${fw}">${fmtN(c)}</td><td class="num" style="font-weight:${fw};color:#dc2626">${(100-p).toFixed(1)}%</td><td class="num" style="font-weight:${fw};color:${cor(p)}">${p.toFixed(1)}%</td>${cref}${cd}${c12}</tr>`;
+  const safras=Object.values(agg).sort((a,b)=>(a.ano-b.ano)||(a.mes-b.mes));
+  if(!safras.length){thead.innerHTML='';tb.innerHTML='<tr><td style="color:#64748b;padding:14px">Sem vendas para os filtros selecionados.</td></tr>';ensureFoot('tblSafra').innerHTML='';return;}
+  // heatmap na paleta azul do dash: claro (#eff6ff) → navy (#1e3a8a)
+  const LO=[239,246,255],HI=[30,58,138];
+  const cell=(v,strong)=>{
+    if(v==null)return '<td class="num" style="color:#e2e8f0"></td>';
+    const t=Math.max(0,Math.min(1,(v-25)/75));
+    const c=LO.map((lo,i)=>Math.round(lo+(HI[i]-lo)*t));
+    const fg=t>0.52?'#fff':'#1e3a8a';
+    return `<td class="num" style="background:rgb(${c[0]},${c[1]},${c[2]});color:${fg};font-weight:${strong?'800':'700'};font-size:11px">${v.toFixed(0)}</td>`;
   };
-  const anos=[...new Set(enr.map(o=>o.ano))].sort();
+  const curvaSafra=o=>{
+    const M=REF_IDX-(o.ano*12+o.mes), v=o.rows.length, out=[];
+    for(let m=0;m<=MAXM;m++){
+      if(m>M){out.push(null);continue;}
+      let ok=0;for(const r of o.rows){if(r[10]<0||r[10]>m)ok++;}
+      out.push(v?ok/v*100:null);
+    }
+    return out;
+  };
+  tb.innerHTML=safras.map(o=>{
+    const cv=curvaSafra(o);
+    return '<tr><td><span class="badge b25">'+MESNOMES[o.mes-1]+'/'+o.ano+'</span></td><td class="num" style="font-weight:700">'+fmtN(o.rows.length)+'</td>'+cv.map(v=>cell(v,false)).join('')+'</tr>';
+  }).join('');
+  // rodapé: curvas agregadas (KM, censura correta p/ maturidades mistas)
+  const anos=[...new Set(safras.map(o=>o.ano))].sort();
+  const totRow=(label,rs)=>{
+    const cv=curvaRet(rs,MAXM);
+    return '<tr style="border-top:2px solid #cbd5e1"><td style="font-weight:800">'+label+'</td><td class="num" style="font-weight:800">'+fmtN(rs.length)+'</td>'+cv.slice(0,MAXM+1).map(v=>cell(v,true)).join('')+'</tr>';
+  };
   let fh='';
-  if(anos.length>1) anos.forEach(a=>{fh+=totRow('TOTAL '+a+' (recorte)',enr.filter(o=>o.ano===a),false,a===2026);});
-  fh+=totRow(anos.length>1?'TOTAL geral':'TOTAL (filtro)',enr,true,anos.length===1&&anos[0]===2026);
+  if(anos.length>1)anos.forEach(a=>{const rs=rowsF.filter(r=>(r[0]===0?2025:2026)===a);fh+=totRow('TOTAL '+a,rs);});
+  fh+=totRow(anos.length>1?'TOTAL geral':'TOTAL (filtro)',rowsF);
   ensureFoot('tblSafra').innerHTML=fh;
 }
+(function(){const s=$('safraCanal');if(!s)return;
+  CATS.canal.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c;s.appendChild(o);});
+  s.onchange=()=>renderSafra();
+})();
 // ===== ABA PERFIL POR UF / CIDADE =====
 let perfilNivel='uf', perfilOrdem='vol';
 function perfilCard(u){
