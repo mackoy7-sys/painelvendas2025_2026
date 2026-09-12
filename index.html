@@ -311,7 +311,7 @@ footer{text-align:center;color:var(--txt2);font-size:12px;padding:16px}
   <div class="csub">Indicadores comparativos por faixa etária (idade na venda) · clique para ordenar · acompanha todos os filtros</div>
   <div class="tbl-wrap"><table id="tblFaixa"><thead><tr>
     <th data-k="cat">Faixa etária</th><th class="num" data-k="v25">Vol 2025</th><th class="num" data-k="v26">Vol 2026</th>
-    <th class="num" data-k="dv">Δ Vol</th><th class="num" data-k="f25">Fat 2025</th><th class="num" data-k="f26">Fat 2026</th>
+    <th class="num" data-k="dv">Δ Vol</th><th class="num" data-k="sh25">Part. 2025</th><th class="num" data-k="sh26">Part. 2026</th><th class="num" data-k="f25">Fat 2025</th><th class="num" data-k="f26">Fat 2026</th>
     <th class="num" data-k="df">Δ Fat</th><th class="num" data-k="tk25">Ticket 25</th><th class="num" data-k="tk26">Ticket 26</th>
     <th class="num" data-k="dtk">Δ Ticket</th>
   </tr></thead><tbody></tbody></table></div>
@@ -667,13 +667,15 @@ function buildFaixaTable(){
   faixaData=cats.map(c=>{const a=agg[2025][c]||{vol:0,fat:0},b=agg[2026][c]||{vol:0,fat:0};
     const tk25=a.vol?a.fat/a.vol:0,tk26=b.vol?b.fat/b.vol:0;
     return {cat:c,v25:a.vol,v26:b.vol,dv:a.vol?(b.vol-a.vol)/a.vol*100:0,f25:a.fat,f26:b.fat,df:a.fat?(b.fat-a.fat)/a.fat*100:0,tk25,tk26,dtk:tk25?(tk26-tk25)/tk25*100:0};});
+  const TV25=faixaData.reduce((s,r)=>s+r.v25,0)||1, TV26=faixaData.reduce((s,r)=>s+r.v26,0)||1;
+  faixaData.forEach(r=>{r.sh25=r.v25/TV25*100;r.sh26=r.v26/TV26*100;});
   drawFaixaTable();
 }
 function drawFaixaTable(){
   const tb=document.querySelector('#tblFaixa tbody'); if(!tb) return;
   const d=[...faixaData].sort((a,b)=>{let x=a[fSortK],y=b[fSortK];if(typeof x==='string')return fSortAsc?x.localeCompare(y):y.localeCompare(x);return fSortAsc?x-y:y-x;});
-  tb.innerHTML=d.map(r=>`<tr><td><span class="badge b25">${r.cat} anos</span></td><td class="num">${fmtN(r.v25)}</td><td class="num">${fmtN(r.v26)}</td><td class="num" style="color:${r.dv>=0?'#16a34a':'#dc2626'}">${fmtPct(r.dv)}</td><td class="num">${fmtRf(r.f25)}</td><td class="num">${fmtRf(r.f26)}</td><td class="num" style="color:${r.df>=0?'#16a34a':'#dc2626'}">${fmtPct(r.df)}</td><td class="num">${fmtRf(r.tk25)}</td><td class="num">${fmtRf(r.tk26)}</td><td class="num" style="color:${r.dtk>=0?'#16a34a':'#dc2626'}">${fmtPct(r.dtk)}</td></tr>`).join('');
-  ensureFoot('tblFaixa').innerHTML=totalRowHTML(faixaData,'TOTAL');
+  tb.innerHTML=d.map(r=>`<tr><td><span class="badge b25">${r.cat} anos</span></td><td class="num">${fmtN(r.v25)}</td><td class="num">${fmtN(r.v26)}</td><td class="num" style="color:${r.dv>=0?'#16a34a':'#dc2626'}">${fmtPct(r.dv)}</td><td class="num">${r.sh25.toFixed(1)}%</td><td class="num" style="font-weight:700">${r.sh26.toFixed(1)}%</td><td class="num">${fmtRf(r.f25)}</td><td class="num">${fmtRf(r.f26)}</td><td class="num" style="color:${r.df>=0?'#16a34a':'#dc2626'}">${fmtPct(r.df)}</td><td class="num">${fmtRf(r.tk25)}</td><td class="num">${fmtRf(r.tk26)}</td><td class="num" style="color:${r.dtk>=0?'#16a34a':'#dc2626'}">${fmtPct(r.dtk)}</td></tr>`).join('');
+  ensureFoot('tblFaixa').innerHTML=totalRowHTML(faixaData,'TOTAL',true);
 }
 document.querySelectorAll('#tblFaixa thead th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(fSortK===k)fSortAsc=!fSortAsc;else{fSortK=k;fSortAsc=(k==='cat');}drawFaixaTable();});
 
