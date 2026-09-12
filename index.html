@@ -209,7 +209,7 @@ footer{text-align:center;color:var(--txt2);font-size:12px;padding:16px}
           <label style="font-size:12px;font-weight:600;color:#475569;display:flex;align-items:center;gap:6px">Canal:
             <select id="safraCanal" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:12px;max-width:260px"><option value="">Todos (segue filtro geral)</option></select>
           </label></h3>
-        <div class="csub">Cada linha é uma <b>safra</b> (mês de venda) e cada coluna a <b>idade em meses</b> desde o cadastro: a célula mostra o <b>% ainda ativo ao completar aquele mês</b>, pela data real de cancelamento (M0 = 100%). Célula vazia = idade que a safra ainda não atingiu. Quanto mais escuro o azul, maior a retenção — a leitura vertical compara safras na <b>mesma idade</b>. Reflete os filtros (Diretoria/UF + Ano/Mês de venda) e o seletor <b>Canal</b> acima (padrão: segue o filtro geral). No rodapé, <b>TOTAL 2025 / 2026 / geral</b> com a curva agregada do período (Kaplan-Meier, mesma dos gráficos).</div>
+        <div class="csub">Cada linha é uma <b>safra</b> (mês de venda) e cada coluna a <b>idade em meses</b> desde o cadastro: a célula mostra o <b>% ainda ativo ao completar aquele mês</b>, pela data real de cancelamento (M0 = 100%). Célula vazia = idade que a safra ainda não atingiu. A matriz vai até <b>M24</b> (colunas vão preenchendo conforme as safras envelhecem) e a leitura vertical compara safras na <b>mesma idade</b> — cores: <span style="color:#16a34a;font-weight:700">≥80</span> · <span style="color:#15803d;font-weight:700">65–79</span> · <span style="color:#ca8a04;font-weight:700">50–64</span> · <span style="color:#dc2626;font-weight:700">&lt;50</span>. Reflete os filtros (Diretoria/UF + Ano/Mês de venda) e o seletor <b>Canal</b> acima (padrão: segue o filtro geral). No rodapé, <b>TOTAL 2025 / 2026 / geral</b> com a curva agregada do período (Kaplan-Meier, mesma dos gráficos).</div>
         <div class="tbl-wrap" style="max-height:none"><table id="tblSafra"><thead></thead><tbody></tbody></table></div>
       </div></section>
       <section class="row" style="margin-bottom:18px"><div class="card tall">
@@ -1253,7 +1253,7 @@ function renderSafra(){
   const ccL=(sel&&sel.value!=='')?+sel.value:-1;
   let rowsF=cancRows(ccL>=0?false:true);            // Dir/UF + Ano/Mês de venda (canal global só quando sem override)
   if(ccL>=0) rowsF=rowsF.filter(r=>r[2]===ccL);
-  const MAXM=12;
+  const MAXM=24;
   const thead=document.querySelector('#tblSafra thead');
   thead.innerHTML='<tr><th>Safra</th><th class="num">Vidas</th>'+Array.from({length:MAXM+1},(_,m)=>'<th class="num">M'+m+'</th>').join('')+'</tr>';
   const agg={};
@@ -1263,14 +1263,11 @@ function renderSafra(){
   }
   const safras=Object.values(agg).sort((a,b)=>(a.ano-b.ano)||(a.mes-b.mes));
   if(!safras.length){thead.innerHTML='';tb.innerHTML='<tr><td style="color:#64748b;padding:14px">Sem vendas para os filtros selecionados.</td></tr>';ensureFoot('tblSafra').innerHTML='';return;}
-  // heatmap na paleta azul do dash: claro (#eff6ff) → navy (#1e3a8a)
-  const LO=[239,246,255],HI=[30,58,138];
+  // sem fundo: texto colorido pela escala de % do dash
+  const corM=v=>v>=80?'#16a34a':v>=65?'#15803d':v>=50?'#ca8a04':'#dc2626';
   const cell=(v,strong)=>{
-    if(v==null)return '<td class="num" style="color:#e2e8f0"></td>';
-    const t=Math.max(0,Math.min(1,(v-25)/75));
-    const c=LO.map((lo,i)=>Math.round(lo+(HI[i]-lo)*t));
-    const fg=t>0.52?'#fff':'#1e3a8a';
-    return `<td class="num" style="background:rgb(${c[0]},${c[1]},${c[2]});color:${fg};font-weight:${strong?'800':'700'};font-size:11px">${v.toFixed(0)}</td>`;
+    if(v==null)return '<td class="num"></td>';
+    return `<td class="num" style="color:${corM(v)};font-weight:${strong?'800':'700'};font-size:11px">${v.toFixed(0)}</td>`;
   };
   const curvaSafra=o=>{
     const M=REF_IDX-(o.ano*12+o.mes), v=o.rows.length, out=[];
