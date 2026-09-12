@@ -307,6 +307,16 @@ footer{text-align:center;color:var(--txt2);font-size:12px;padding:16px}
   </tr></thead><tbody></tbody></table></div>
 </div></section>
 <section class="row"><div class="card">
+  <h3>Detalhamento por Faixa Etária</h3>
+  <div class="csub">Indicadores comparativos por faixa etária (idade na venda) · clique para ordenar · acompanha todos os filtros</div>
+  <div class="tbl-wrap"><table id="tblFaixa"><thead><tr>
+    <th data-k="cat">Faixa etária</th><th class="num" data-k="v25">Vol 2025</th><th class="num" data-k="v26">Vol 2026</th>
+    <th class="num" data-k="dv">Δ Vol</th><th class="num" data-k="f25">Fat 2025</th><th class="num" data-k="f26">Fat 2026</th>
+    <th class="num" data-k="df">Δ Fat</th><th class="num" data-k="tk25">Ticket 25</th><th class="num" data-k="tk26">Ticket 26</th>
+    <th class="num" data-k="dtk">Δ Ticket</th>
+  </tr></thead><tbody></tbody></table></div>
+</div></section>
+<section class="row"><div class="card">
   <h3>Vendas Mês a Mês por Canal (vidas)</h3>
   <div class="csub">Matriz canal × mês do período selecionado, com uma linha por ano · a coluna de % usa o volume acumulado <b>até o último mês com dados de 2026</b> (janela comparável nos 2 anos) · acompanha todos os filtros e presets</div>
   <div class="tbl-wrap"><table id="tblCanalMes"><thead></thead><tbody></tbody></table></div>
@@ -649,6 +659,24 @@ function drawCanalTable(){
 }
 document.querySelectorAll('#tblCanal thead th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(cSortK===k)cSortAsc=!cSortAsc;else{cSortK=k;cSortAsc=false;}drawCanalTable();});
 
+// tabela faixa etária
+let faixaData=[],fSortK='cat',fSortAsc=true;
+function buildFaixaTable(){
+  const agg=aggBy(chartRows(),5,CATS.faixa);
+  const cats=FAIXA_ORDER.filter(c=>(agg[2025][c]&&agg[2025][c].vol)||(agg[2026][c]&&agg[2026][c].vol));
+  faixaData=cats.map(c=>{const a=agg[2025][c]||{vol:0,fat:0},b=agg[2026][c]||{vol:0,fat:0};
+    const tk25=a.vol?a.fat/a.vol:0,tk26=b.vol?b.fat/b.vol:0;
+    return {cat:c,v25:a.vol,v26:b.vol,dv:a.vol?(b.vol-a.vol)/a.vol*100:0,f25:a.fat,f26:b.fat,df:a.fat?(b.fat-a.fat)/a.fat*100:0,tk25,tk26,dtk:tk25?(tk26-tk25)/tk25*100:0};});
+  drawFaixaTable();
+}
+function drawFaixaTable(){
+  const tb=document.querySelector('#tblFaixa tbody'); if(!tb) return;
+  const d=[...faixaData].sort((a,b)=>{let x=a[fSortK],y=b[fSortK];if(typeof x==='string')return fSortAsc?x.localeCompare(y):y.localeCompare(x);return fSortAsc?x-y:y-x;});
+  tb.innerHTML=d.map(r=>`<tr><td><span class="badge b25">${r.cat} anos</span></td><td class="num">${fmtN(r.v25)}</td><td class="num">${fmtN(r.v26)}</td><td class="num" style="color:${r.dv>=0?'#16a34a':'#dc2626'}">${fmtPct(r.dv)}</td><td class="num">${fmtRf(r.f25)}</td><td class="num">${fmtRf(r.f26)}</td><td class="num" style="color:${r.df>=0?'#16a34a':'#dc2626'}">${fmtPct(r.df)}</td><td class="num">${fmtRf(r.tk25)}</td><td class="num">${fmtRf(r.tk26)}</td><td class="num" style="color:${r.dtk>=0?'#16a34a':'#dc2626'}">${fmtPct(r.dtk)}</td></tr>`).join('');
+  ensureFoot('tblFaixa').innerHTML=totalRowHTML(faixaData,'TOTAL');
+}
+document.querySelectorAll('#tblFaixa thead th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(fSortK===k)fSortAsc=!fSortAsc;else{fSortK=k;fSortAsc=(k==='cat');}drawFaixaTable();});
+
 // tabela por UF
 let tblData=[],sortK='v26',sortAsc=false;
 let ufOpen=new Set();
@@ -753,7 +781,7 @@ function initFilters(){
 function updateTableHeaders(){
   const A=seriesA(),B=seriesB();
   const map={v25:'Vol '+A,v26:'Vol '+B,f25:'Fat '+A,f26:'Fat '+B,tk25:'Ticket '+A,tk26:'Ticket '+B,sh25:'Part. '+A,sh26:'Part. '+B};
-  document.querySelectorAll('#tbl thead th, #tblCanal thead th').forEach(th=>{const k=th.dataset.k;if(map[k])th.textContent=map[k];});
+  document.querySelectorAll('#tbl thead th, #tblCanal thead th, #tblFaixa thead th').forEach(th=>{const k=th.dataset.k;if(map[k])th.textContent=map[k];});
 }
 
 // ===== DIAGNÓSTICO ESTRATÉGICO (recalcula a cada filtro) =====
@@ -1138,7 +1166,7 @@ function buildCanalMes(){
   });
   ensureFoot('tblCanalMes').innerHTML=fh;
 }
-function render(){renderKPIs();renderMonthly();renderBreakdowns();buildCanalTable();buildCanalMes();buildTable();updateTableHeaders();buildDiagnosis();}
+function render(){renderKPIs();renderMonthly();renderBreakdowns();buildCanalTable();buildFaixaTable();buildCanalMes();buildTable();updateTableHeaders();buildDiagnosis();}
 function renderSafraCurva(){
   const el=$('chSafraCurva'); if(!el) return;
   const dc=dirCode(),uc=ufCode(),cc=cnCode();
