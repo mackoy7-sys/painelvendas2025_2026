@@ -213,9 +213,12 @@ footer{text-align:center;color:var(--txt2);font-size:12px;padding:16px}
       </div></section>
       <section class="row" style="margin-bottom:18px"><div class="card tall">
         <h3 style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">Curva de Permanência por Período — Safras 2025 × 2026
-          <label style="font-size:12px;font-weight:600;color:#475569;display:flex;align-items:center;gap:6px">Canal:
-            <select id="safraCurvaCanal" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:12px;max-width:260px"><option value="">Todos (segue filtro geral)</option></select>
-          </label></h3>
+          <span style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span id="safraCurvaDelta" style="font-size:12px;font-weight:800;padding:3px 12px;border-radius:999px;white-space:nowrap"></span>
+            <label style="font-size:12px;font-weight:600;color:#475569;display:flex;align-items:center;gap:6px">Canal:
+              <select id="safraCurvaCanal" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:12px;max-width:260px"><option value="">Todos (segue filtro geral)</option></select>
+            </label>
+          </span></h3>
         <div class="csub">Retenção mês a mês desde o cadastro, comparando as safras <b>2025 (azul)</b> × <b>2026 (laranja)</b> do recorte (Diretoria/UF/Canal + meses de venda selecionados) · o seletor <b>Canal</b> acima restringe só este gráfico (padrão: segue o filtro geral) · a curva 2026 termina na maturidade que já atingiu · o filtro "Ano venda" não se aplica aqui — o gráfico compara os dois períodos</div>
         <canvas id="chSafraCurva"></canvas>
         <div class="csub" style="margin-top:10px" id="safraCurvaNote"></div>
@@ -1190,11 +1193,13 @@ function renderSafraCurva(){
       tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y!=null?c.parsed.y+'% ativos':'—')}}},
     scales:{y:{min:40,max:100,ticks:{callback:v=>v+'%'},grid:{color:'#f1f5f9'},title:{display:true,text:'% ativos'}},x:{grid:{display:false}}}}});
   let lastM=0;for(let m=1;m<=12;m++){if(c25[m]!=null&&c26[m]!=null)lastM=m;}
+  const bd=$('safraCurvaDelta');
   let nota='<b>Leitura:</b> ';
   if(lastM>0){const d=+(c26[lastM]-c25[lastM]).toFixed(1);
+    if(bd){bd.textContent=(d>=0?'▲ +':'▼ ')+d+' pp · 2026 vs 2025 no mês '+lastM;bd.style.background=d>=0?'#dcfce7':'#fee2e2';bd.style.color=d>=0?'#15803d':'#b91c1c';}
     nota+=`no <b>mês ${lastM}</b> (última idade comparável), as safras 2026 retêm <b>${c26[lastM]}%</b> × ${c25[lastM]}% das 2025 na mesma idade → <span style="color:${d>=0?'#16a34a':'#dc2626'};font-weight:700">${d>=0?'+':''}${d} pp</span>.`;
     if(c25[12]!=null)nota+=` A safra 2025 fechou 12 meses com ${c25[12]}%.`;
-  } else nota+='sem idade comparável entre os períodos neste recorte.';
+  } else {nota+='sem idade comparável entre os períodos neste recorte.';if(bd){bd.textContent='';bd.style.background='transparent';}}
   $('safraCurvaNote').innerHTML=nota;
 }
 (function(){const s=$('safraCurvaCanal');if(!s)return;
