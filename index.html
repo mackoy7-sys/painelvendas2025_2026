@@ -1370,6 +1370,12 @@ setTimeout(()=>{
     $('loading').innerHTML='<span style="color:#dc2626">Erro ao carregar: '+e.message+'</span>';
   }
   $('loading').style.display='none';
+  // deep links p/ embutir em outros dashboards: ?view=2026 abre no preset Ano 2026; ?view=canc abre o painel Cancelamento & Retenção
+  try{
+    const v=new URLSearchParams(location.search).get('view');
+    if(v==='2026'||v==='2025'){const b=document.querySelector('#segComp button[data-v="y'+v+'"]');if(b)b.click();}
+    else if(v==='canc'){$('cancOverlay').classList.add('open');setTimeout(renderCanc,60);}
+  }catch(e){}
 },30);
 </script>
 
