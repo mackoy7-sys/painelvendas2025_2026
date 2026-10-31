@@ -289,7 +289,7 @@ footer{text-align:center;color:var(--txt2);font-size:12px;padding:16px}
 </section>
 
 <section class="row r2">
-  <div class="card tall"><h3>Volume de Vendas Mês a Mês</h3><div class="csub">Comparativo mensal 2025 vs 2026</div><canvas id="chVolMes"></canvas></div>
+  <div class="card tall"><h3>Volume de Vendas Mês a Mês</h3><div class="csub">Comparativo mensal 2025 vs 2026 · 2025 sempre no ano cheio (comparação mês a mês)</div><canvas id="chVolMes"></canvas></div>
   <div class="card tall"><h3>Faturamento Mês a Mês</h3><div class="csub">Soma das mensalidades (R$)</div><canvas id="chFatMes"></canvas></div>
 </section>
 <section class="row r2b">
@@ -473,6 +473,9 @@ function ufCode(){const v=$('fUF').value;return v===''?-1:CATS.uf.indexOf(v);}
 function cnCode(){const v=$('fCanal').value;return v===''?-1:CATS.canal.indexOf(v);}
 function isJM(){return $('fComp').value==='jm';}
 function isMeses(){return $('fComp').value==='meses';}
+function isYTD(){return $('fComp').value==='ytd';}
+// recorte de meses comparaveis: no YTD, 2025 e 2026 sao cortados no mesmo mes (Jan-Out)
+function cutYTD(){return isJM()||isYTD();}
 // conjunto de meses selecionados (modo 'meses')
 let selMeses=(()=>{const s=new Set();for(let i=0;i<ROWS.length;i++){if(ROWS[i][0]===1)s.add(ROWS[i][1]);}return s;})(); // meses com dados de 2026 na base
 // retorna 0 (=2025), 1 (=2026) ou -1 (ambos)
@@ -480,7 +483,7 @@ function singleYear(){const v=$('fComp').value;return v==='y2025'?0:v==='y2026'?
 // aplica recorte de ano único, se houver
 function applyYear(rows){const sy=singleYear();if(sy<0)return rows;return rows.filter(r=>r[0]===sy);}
 // linhas para gráficos/tabelas: filtros + recorte JM/meses + ano único
-function chartRows(){return applyYear(getRows(isJM()));}
+function chartRows(){return applyYear(getRows(cutYTD()));}
 // modo de comparação por segmento HMO×PPO
 function isHP(){return $('fComp').value==='hmoppo';}
 // chave da série de um registro: ano (col 0) normalmente; diretoria (col 4) no modo HMO×PPO
@@ -552,10 +555,10 @@ function renderKPIs(){
     $('noteBox').innerHTML='<strong>Segmentos:</strong> comparação HMO × PPO. As séries dos gráficos passam a ser HMO (azul) vs PPO (laranja); o filtro de Diretoria fica desativado neste modo. KPIs no topo destacam HMO e a participação de PPO. '+(filtTxt?'<strong>Filtros ativos:</strong> '+filtTxt+'.':'');
     return;
   }
-  const rowsJM=getRows(isJM());
+  const rowsJM=getRows(cutYTD());
   const a=sum(rowsJM,0),b=sum(rowsJM,1);
   const v25=a.v,v26=b.v,f25=a.f,f26=b.f,t25=v25?f25/v25:0,t26=v26?f26/v26:0;
-  let label=comp==='jm'?'Jan–Out/25 vs Jan–Out/26 (meses completos)':'YTD Jan–Out';
+  let label=(comp==='jm'||comp==='ytd')?'Jan–Out/25 vs Jan–Out/26 (mesmo período)':'YTD Jan–Out';
   if(isMeses()){const ms=mesesLabel();label=ms+' · 2025 × 2026';}
   $('kVol').textContent=fmtN(v26);$('kFat').textContent=fmtR(f26);$('kTk').textContent=fmtRf(t26);
   $('kTot').textContent=fmtN(rowsJM.length);
@@ -568,7 +571,7 @@ function renderKPIs(){
     let aviso=faltam2026.length?' <strong style="color:#fca5a5">Atenção:</strong> 2026 tem dados até Outubro (mês fechado, corte 31/10) — meses selecionados sem vendas em 2026 podem distorcer a comparação.':'';
     $('noteBox').innerHTML='<strong>Comparação por meses:</strong> '+mesesLabel()+' de 2025 × 2026. Todos os gráficos e tabelas seguem os meses escolhidos.'+aviso+(filtTxt?' <strong>Filtros:</strong> '+filtTxt+'.':'');
   } else
-  $('noteBox').innerHTML='<strong>Comparação:</strong> '+label+'. Todos os gráficos seguem o período selecionado. '+(filtTxt?'<strong>Filtros ativos:</strong> '+filtTxt+'. Todos os gráficos e tabelas refletem a seleção.':'Sem filtros — visão geral.');
+  $('noteBox').innerHTML='<strong>Comparação:</strong> '+label+'. Todos os gráficos seguem o período selecionado'+((comp==='jm'||comp==='ytd')?' — 2025 recortado em Jan–Out para bater com o que 2026 já tem fechado; só o gráfico mês a mês mantém 2025 inteiro, porque ali a comparação já é mês contra mês':'')+'. '+(filtTxt?'<strong>Filtros ativos:</strong> '+filtTxt+'. Todos os gráficos e tabelas refletem a seleção.':'Sem filtros — visão geral.');
 }
 const MESNOMES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 function mesesLabel(){
@@ -583,11 +586,11 @@ function mesesLabel(){
 
 function baseOpts(yfmt,dl){const o={responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},layout:{padding:{top:18}},plugins:{legend:{position:'top',labels:{boxWidth:12,padding:14}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+yfmt(c.parsed.y)}}},scales:{y:{ticks:{callback:yfmt},grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}};if(dl){o.plugins.datalabels={anchor:'end',align:'top',clamp:true,offset:dl.line?4:2,color:'#334155',font:{size:8,weight:'600'},formatter:v=>v?(dl.money?'R$'+compact(v):compact(v)):''};}else{o.plugins.datalabels={display:false};}return o;}
 
-function monthLabels(){const m=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];if(isJM())return m.slice(0,9);if(isMeses())return [...selMeses].sort((a,b)=>a-b).map(x=>m[x-1]);return m;}
+function monthLabels(){const m=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];if(isJM())return m.slice(0,10);if(isMeses())return [...selMeses].sort((a,b)=>a-b).map(x=>m[x-1]);return m;}
 function renderMonthly(){
-  const rows=chartRows();const t=monthAgg(rows);const jm=isJM();
+  const rows=applyYear(getRows(isJM()));const t=monthAgg(rows);const jm=isJM();
   const mesesList=isMeses()?[...selMeses].sort((a,b)=>a-b):null;
-  const N=jm?9:12;
+  const N=jm?10:12;
   const ser=(field)=>{const s={2025:[],2026:[]};[0,1].forEach(y=>{const yr=y?2026:2025;
     const iter=mesesList||Array.from({length:N},(_,i)=>i+1);
     for(const mo of iter){const o=t[y][mo];s[yr].push(o&&o.vol>0?(field==='ticket'?o.fat/o.vol:o[field]):null);}});return s;};
@@ -822,7 +825,7 @@ function buildPPOanalysis(){
   const pct=v=>(v>=0?'+':'')+v.toFixed(1)+'%';
   // base: respeita UF/Canal/período, mas NÃO o filtro diretoria (queremos os dois segmentos)
   const uc=ufCode(),cc=cnCode();
-  const base=[];for(const r of ROWS){if(uc>=0&&r[3]!==uc)continue;if(cc>=0&&r[2]!==cc)continue;if(isJM()&&r[1]>10)continue;base.push(r);}
+  const base=[];for(const r of ROWS){if(uc>=0&&r[3]!==uc)continue;if(cc>=0&&r[2]!==cc)continue;if(cutYTD()&&r[1]>10)continue;base.push(r);}
   const isP=r=>r[4]===PPO_CODE;
   // totais
   let pV=0,pF=0,hV=0,hF=0;
