@@ -621,7 +621,13 @@ document.getElementById('segCanal').innerHTML=Object.keys(META.canais).map(k=>
 document.getElementById('corte').textContent='Corte '+META.corte+' · '+nf(META.base)+' registros na base';
 document.getElementById('rodape').innerHTML='Vidas por mês de cadastramento · ticket = mensalidade média · receita = soma das mensalidades contratadas no mês · '+
   'base BASE_DIGITAL_FULL, corte '+META.corte+'. Para atualizar, substitua o bloco de dados no topo do script.';
-const PRESETS=[['Jan–Out',0,9],['1º semestre',0,5],['2º semestre',6,9],['Último mês',9,9]];
+// atalhos de periodo: ano todo + trimestres civis existentes na base (+ ultimo mes, se nao coincidir)
+function presets(){
+  const n=MESES.length, L=[[MESES[0]+'–'+MESES[n-1],0,n-1]];
+  for(let q=0;q<4;q++){const a=q*3; if(a>n-1)break; L.push([(q+1)+'º tri',a,Math.min(a+2,n-1)]);}
+  if(!L.some(z=>z[1]===n-1&&z[2]===n-1)) L.push(['Último mês',n-1,n-1]);
+  return L;}
+const PRESETS=presets();
 function pintaPeriodo(){
   document.getElementById('segPer').innerHTML=PRESETS.map((pz,i)=>
     `<button type="button" data-p="${i}" aria-pressed="${mA===pz[1]&&mB===pz[2]}">${pz[0]}</button>`).join('');
