@@ -65,6 +65,9 @@ h1{font-size:clamp(18px,2.6vw,23px);margin:0;font-weight:700;letter-spacing:-.02
 @media (max-width:980px){.kpis{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:620px){.kpis{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:400px){.kpis{grid-template-columns:1fr}}
+.kpis4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0 2px}
+@media (max-width:760px){.kpis4{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:400px){.kpis4{grid-template-columns:1fr}}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px 11px;
   display:flex;flex-direction:column;gap:2px;min-width:0}
 .kpi .lab{font-size:12px;color:var(--ink-2);font-weight:500;line-height:1.3}
@@ -79,6 +82,7 @@ h2{font-size:14.5px;font-weight:600;margin:0;letter-spacing:-.01em}
 .csub{font-size:12px;color:var(--ink-3);margin:3px 0 0;line-height:1.45}
 .legend{display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:12px;color:var(--ink-2);font-weight:500;padding:9px 2px 2px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.legend .dash{display:inline-block;width:18px;border-top:2px dashed var(--c7);margin-right:7px;vertical-align:4px}
 .chartbox{position:relative}
 svg{display:block;width:100%;height:auto}
 svg text{font-variant-numeric:tabular-nums}
@@ -602,6 +606,101 @@ function pintaO8(){
     document.getElementById('o5').innerHTML='<div class="tcard"><div class="scroll">'+h+'</div></div>';
   })();}
 
+
+/* ===== ABA: ritmo (as duas metades do periodo) ===== */
+function abaRitmo(){
+  const n=M.length, K=corte();
+  if(n<2||K<1||K>=n) return `<section class="card"><h2>Ritmo do período</h2>
+    <p class="csub">Esta visão compara as duas metades do recorte. Escolha um período de dois meses ou mais.</p></section>`;
+  return `<section class="card">
+      <h2>${esc(META.canais[canal])} — ${rotPer()}</h2>
+      <p class="csub" id="rdek"></p>
+      <div class="kpis4" id="rkpi"></div>
+      <div class="legend" id="rleg"></div>
+      <div class="chartbox" id="r1"><div class="tip"></div></div>
+    </section>
+    <div style="height:14px"></div>
+    <div id="r2"></div>`;}
+function pintaRitmo(){
+  const n=M.length, K=corte();
+  if(n<2||K<1||K>=n) return;
+  const c=o(), V=c.mt, T=c.tk, V25=c.mt25;
+  const n1=K, n2=n-K;
+  const m1=sum(V.slice(0,K))/n1, m2=sum(V.slice(K))/n2;
+  const perda=sum(V.slice(K))-m1*n2;
+  const a=K-1, b=K, u=n-1;
+  const dV=V[b]-V[a], dMes=V[a]?(V[b]/V[a]-1)*100:null, dFim=V[a]?(V[u]/V[a]-1)*100:null;
+  const dMet=m1?(m2/m1-1)*100:null;
+
+  document.getElementById('rdek').textContent=
+    'Média de '+nf(m1)+' vidas/mês em '+rotA()+' contra '+nf(m2)+' em '+rotB()+(dMet!=null?' ('+pp(dMet)+'%)':'')+'.'+
+    (dMes!=null?' A virada é de um mês para o outro: '+M[a]+' → '+M[b]+', '+pp(dMes)+'%.':'');
+
+  document.getElementById('rkpi').innerHTML=[
+    {l:'Média '+rotA(), v:nf(m1), s:n1+(n1>1?' meses':' mês')},
+    {l:'Média '+rotB(), v:nf(m2), s:dMet!=null?pp(dMet)+'% vs '+rotA():'sem base em '+rotA(), c:m2>=m1?'up':'dn'},
+    {l:M[a]+' → '+M[b], v:(dV>=0?'+':'−')+nf(Math.abs(dV)), s:dMes!=null?pp(dMes)+'% em um mês':'—', c:dV>=0?'up':'dn'},
+    {l:(perda>=0?'Ganho acumulado':'Perda acumulada')+' em '+rotB(), v:(perda>=0?'+':'−')+nf(Math.abs(perda)), s:'vs ritmo de '+rotA(), c:perda>=0?'up':'dn'}
+  ].map(k=>`<div class="kpi"><div class="lab">${k.l}</div><div class="val">${k.v}</div><div class="sub${k.c?' '+k.c:''}">${k.s}</div></div>`).join('');
+
+  document.getElementById('rleg').innerHTML=
+    `<span><i style="background:var(--c1)"></i>${rotA()}</span>`+
+    `<span><i style="background:var(--c2)"></i>${rotB()}</span>`+
+    `<span><span class="dash"></span>Média ${rotA()} (${nf(m1)})</span>`+
+    (dFim!=null?`<span style="color:var(--c2);font-weight:600">${M[a]} → ${M[u]}: ${pp(dFim)}%</span>`:'')+
+    `<span style="color:var(--ink-3);font-weight:400">linha inferior: ticket médio do mês (R$)</span>`;
+
+  (function(){
+    const W=960,H=450,L=78,R=902,TOP=34,BOT=368;
+    const vv=V.filter(v=>v!=null);
+    const mn=Math.min(...vv,m1), mx=Math.max(...vv,m1), rg=(mx-mn)||Math.max(mx*0.2,1);
+    const lo=Math.max(0,mn-rg*0.30), hi=mx+rg*0.22, sp=hi-lo;
+    const st=sp>20000?5000:sp>8000?2000:sp>4000?1000:sp>1600?500:sp>600?200:sp>250?100:sp>100?50:20;
+    const x=i=>n>1?L+i*(R-L)/(n-1):(L+R)/2, y=v=>BOT-(v-lo)/(hi-lo)*(BOT-TOP);
+    const hw=n>1?(R-L)/(n-1):(R-L);
+    const path=(f,z)=>V.slice(f,z).map((v,k)=>(k?'L':'M')+x(f+k).toFixed(1)+' '+y(v).toFixed(1)).join(' ');
+    let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Vidas por mês em ${esc(META.canais[canal])}, ${rotPer()}, com a média da primeira metade do período">`;
+    for(let v=Math.ceil(lo/st)*st;v<=hi;v+=st){const yy=y(v);
+      s+=`<line x1="${L}" y1="${yy.toFixed(1)}" x2="${R}" y2="${yy.toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`+
+         `<text x="${L-12}" y="${(yy+4).toFixed(1)}" text-anchor="end" font-size="12.5" fill="var(--ink-3)" font-family="var(--font-d)">${nf(v)}</text>`;}
+    s+=`<line x1="${L}" y1="${y(m1).toFixed(1)}" x2="${R}" y2="${y(m1).toFixed(1)}" stroke="var(--c7)" stroke-width="2" stroke-dasharray="7 5"/>`;
+    if(dFim!=null&&Math.abs(y(V[a])-y(V[u]))>26){
+      const yT=y(V[a]), yB=y(V[u]), xA=x(u), yMid=(yT+yB)/2, dn=yB>yT, sg=dn?1:-1;
+      s+=`<line x1="${x(a)}" y1="${yT.toFixed(1)}" x2="${xA}" y2="${yT.toFixed(1)}" stroke="var(--c2)" stroke-width="1.5" stroke-dasharray="4 4" opacity=".5"/>`;
+      s+=`<line x1="${xA}" y1="${(yT+7*sg).toFixed(1)}" x2="${xA}" y2="${(yB-7*sg).toFixed(1)}" stroke="var(--c2)" stroke-width="1.5"/>`;
+      s+=`<path d="M${xA-4.5} ${(yT+8*sg).toFixed(1)} L${xA} ${(yT+1*sg).toFixed(1)} L${xA+4.5} ${(yT+8*sg).toFixed(1)} Z" fill="var(--c2)"/>`;
+      s+=`<path d="M${xA-4.5} ${(yB-8*sg).toFixed(1)} L${xA} ${(yB-1*sg).toFixed(1)} L${xA+4.5} ${(yB-8*sg).toFixed(1)} Z" fill="var(--c2)"/>`;
+      s+=`<text x="${xA-13}" y="${(yMid-1).toFixed(1)}" text-anchor="end" font-size="16" font-weight="700" fill="var(--c2)" font-family="var(--font-d)">${pp(dFim)}%</text>`;
+      s+=`<text x="${xA-13}" y="${(yMid+15).toFixed(1)}" text-anchor="end" font-size="12.5" fill="var(--ink-2)" font-family="var(--font-d)">${M[a]} → ${M[u]}</text>`;}
+    s+=`<path d="${path(0,K)}" fill="none" stroke="var(--c1)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    s+=`<path d="${path(a,n)}" fill="none" stroke="var(--c2)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    V.forEach((v,i)=>{
+      s+=`<circle cx="${x(i)}" cy="${y(v).toFixed(1)}" r="5.5" fill="${i<K?'var(--c1)':'var(--c2)'}" stroke="var(--surface)" stroke-width="2"/>`;
+      const up=!(i>0&&i<n-1&&V[i-1]>v&&V[i+1]>v)&&i!==n-1;
+      s+=`<text x="${x(i)}" y="${(y(v)+(up?-15:25)).toFixed(1)}" text-anchor="middle" font-size="13" fill="var(--ink)" font-family="var(--font-d)">${nf(v)}</text>`;
+      s+=`<text x="${x(i)}" y="${BOT+28}" text-anchor="middle" font-size="13.5" fill="var(--ink-2)" font-family="var(--font-d)">${M[i]}</text>`;
+      s+=`<text x="${x(i)}" y="${BOT+58}" text-anchor="middle" font-size="12.5" fill="var(--ink-2)" font-family="var(--font-d)">${T[i]!=null?nf(T[i]):'—'}</text>`;
+      s+=`<rect class="hr" data-i="${i}" x="${(x(i)-hw/2).toFixed(1)}" y="${TOP}" width="${hw.toFixed(1)}" height="${BOT-TOP}" fill="transparent"/>`;});
+    s+=`<line x1="${L}" y1="${BOT+40}" x2="${R}" y2="${BOT+40}" stroke="var(--line)" stroke-width="1"/>`;
+    s+='</svg>';
+    const bx=document.getElementById('r1'); bx.insertAdjacentHTML('afterbegin',s);
+    hover(bx,'.tip','.hr',(r,bb)=>{const i=+r.dataset.i,k=bb.width/W;
+      return {x:x(i)*k, y:y(V[i])*k, html:`<b>${M[i]}/26</b> · ${nf(V[i])} vidas<br>ticket R$ ${T[i]!=null?nf(T[i]):'—'}`+
+        (V25[i]?`<br>vs 2025: ${pp((V[i]/V25[i]-1)*100)}%`:'')};});
+  })();
+
+  const tv=sum(V), tv25=sum(V25), ttk=tv?sum(c.rec)/tv:null;
+  let h='<table><thead><tr><th class="k">Mês</th><th>Vidas</th><th>Ticket médio</th><th>Receita (R$ mil)</th><th>2025</th><th>vs 2025</th></tr></thead><tbody>';
+  M.forEach((m,i)=>{const d=V25[i]?(V[i]/V25[i]-1)*100:null;
+    h+=`<tr><td class="k"><i style="background:${i<K?'var(--c1)':'var(--c2)'}"></i>${m}</td>`+
+       `<td class="num">${nf(V[i])}</td><td class="num">${T[i]!=null?nf(T[i]):'—'}</td>`+
+       `<td class="num">${rk(c.rec[i])}</td><td class="num">${nf(V25[i])}</td>`+
+       `<td class="d ${d!=null&&d>=0?'up':'dn'}">${d!=null?pp(d)+'%':'—'}</td></tr>`;});
+  h+=`</tbody><tfoot><tr><td class="k">${rotPer()}</td><td>${nf(tv)}</td><td>${ttk!=null?nf(ttk):'—'}</td>`+
+     `<td>${rk(sum(c.rec))}</td><td>${nf(tv25)}</td>`+
+     `<td class="d ${tv25&&tv>=tv25?'up':'dn'}">${tv25?pp((tv/tv25-1)*100)+'%':'—'}</td></tr></tfoot></table>`;
+  document.getElementById('r2').innerHTML='<div class="tcard"><div class="scroll">'+h+'</div></div>';}
+
 /* ===== chrome ===== */
 function unidadeBar(){
   return `<div class="bar"><div class="seg" role="group" aria-label="Unidade" id="segUni">
@@ -609,6 +708,7 @@ function unidadeBar(){
     <button type="button" data-u="abs" aria-pressed="${unidade==='abs'}">Vidas</button>
   </div><span class="hint">${M.length>1?`Δ pp compara ${rotB()} com ${rotA()}. ${rotUF()} é a variação de vidas entre ${M[0]} e ${M.at(-1)}.`:'Mês isolado: sem comparação entre períodos.'}</span></div>`;}
 const ABAS=[['geral','Visão geral',abaGeral,pintaGeral],
+  ['ritmo','Ritmo',abaRitmo,pintaRitmo],
   ['faixa','Faixa etária',abaFaixa,pintaFaixa],
   ['plano','Aquisição por plano',abaPlano,pintaPlano],
   ['cruz','Plano × Faixa',abaCruz,pintaCruz],
