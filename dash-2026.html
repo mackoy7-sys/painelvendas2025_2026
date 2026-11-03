@@ -256,7 +256,26 @@ function pintaGeral(){
     const pth=a=>{let d='',op=false;a.forEach((v,i)=>{if(v==null){op=false;return;} d+=(op?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)+' '; op=true;});return d.trim();};
     if(pth(c.mt25)) s+=`<path d="${pth(c.mt25)}" fill="none" stroke="var(--c7)" stroke-width="2" stroke-dasharray="4 3"/>`;
     if(pth(c.mt)) s+=`<path d="${pth(c.mt)}" fill="none" stroke="var(--c1)" stroke-width="2.5" stroke-linejoin="round"/>`;
-    c.mt.forEach((v,i)=>{s+=`<circle cx="${x(i)}" cy="${y(v)}" r="3.6" fill="var(--c1)" stroke="var(--surface)" stroke-width="1.5"/>`;});
+    // rotulos. 2026 segue a forma da propria linha (vale embaixo, resto em cima);
+    // 2025 fica do lado oposto ao ponto de 2026, e so cede quando os dois ficariam colados.
+    // lado aberto: acima quando o ponto supera a media dos vizinhos, abaixo quando nao.
+    // posY impede o rotulo de invadir a faixa dos meses ou o topo; em trecho monotono
+    // desloc o joga para o lado em que o segmento inclinado nao passa.
+    const up26=i=>{const v=c.mt[i], nb=[c.mt[i-1],c.mt[i+1]].filter(z=>z!=null);
+      return nb.length?v>=nb.reduce((p,q)=>p+q,0)/nb.length:true;};
+    const posY=(yv,up)=>{let yy=yv+(up?-9:16); if(yy>BOT+2) yy=yv-9; if(yy<TOP+2) yy=yv+16; return yy;};
+    const desloc=i=>{const p=c.mt[i-1],q=c.mt[i+1],v=c.mt[i];
+      if(p==null||q==null||!((p>v&&v>q)||(p<v&&v<q))) return 0;
+      const dir=q>p?1:-1; return up26(i)?-dir:dir;};
+    c.mt.forEach((v,i)=>{if(v==null)return;
+      const d=desloc(i), an=d>0?'start':d<0?'end':'middle';
+      s+=`<text x="${(x(i)+d*4.5).toFixed(1)}" y="${posY(y(v),up26(i)).toFixed(1)}" text-anchor="${an}" font-size="10" font-weight="500" fill="var(--c1)" font-family="var(--font-d)">${nf(v)}</text>`;});
+    c.mt25.forEach((w,i)=>{if(w==null||w===0||i>=NN)return; const v=c.mt[i];
+      let yy=posY(y(w),true);
+      if(v!=null){const ev=[posY(y(v),up26(i)),y(v)], dd=z=>Math.min(...ev.map(e=>Math.abs(z-e)));
+        const alt=posY(y(w),false); if(dd(alt)>dd(yy)) yy=alt;}
+      s+=`<text x="${x(i).toFixed(1)}" y="${yy.toFixed(1)}" text-anchor="middle" font-size="9.5" fill="var(--ink-3)" font-family="var(--font-d)">${nf(w)}</text>`;});
+    c.mt.forEach((v,i)=>{if(v!=null) s+=`<circle cx="${x(i)}" cy="${y(v)}" r="3.6" fill="var(--c1)" stroke="var(--surface)" stroke-width="1.5"/>`;});
     s+=NN>1?mesesX(L,R,BOT,NN,M):`<text x="${(L+R)/2}" y="${BOT+18}" text-anchor="middle" font-size="11" fill="var(--ink-2)" font-family="var(--font-d)">${M[0]}</text>`;
     for(let i=0;i<NN;i++) s+=`<rect class="h1" data-i="${i}" x="${(x(i)-hw/2).toFixed(1)}" y="${TOP}" width="${hw.toFixed(1)}" height="${BOT-TOP}" fill="transparent"/>`;
     s+='</svg>';
