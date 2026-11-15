@@ -240,7 +240,14 @@ function abaGeral(){
       <div class="chartbox" id="g3"><div class="tip"></div></div></section>
     <section class="card"><h2>Idade média da venda</h2><p class="csub">Média simples da idade do beneficiário.</p>
       <div class="chartbox" id="g4"><div class="tip"></div></div></section>
-  </div>`;}
+  </div>
+  <div style="height:14px"></div>
+  <section class="card"><h2>Canais mês a mês</h2>
+    <p class="csub">Individual, PME e Administradora no mesmo recorte de período. Só 2026, eixo a partir de zero.
+      Este gráfico compara os três canais e não segue o canal escolhido acima.</p>
+    <div class="chartbox" id="g5"><div class="tip"></div></div>
+    <div class="legend">${CANCMP.map(c=>`<span><i style="background:${c[2]}"></i>${c[1]}</span>`).join('')}</div>
+  </section>`;}
 function pintaGeral(){
   const c=o();
   // g1 linhas 2026 x 2025
@@ -290,7 +297,37 @@ function pintaGeral(){
   barras('g3',c.rec.map(v=>v/1000),v=>nf(v),'var(--c3)','Receita recorrente por mês, em R$ mil');
   // g4 idade
   linha('g4',c.idade,v=>p1(v),'var(--c1)','Idade média da venda por mês');
+  pintaCanais();
 }
+
+/* ===== canais lado a lado: independe do canal selecionado, segue o periodo ===== */
+const CANCMP=[['IND','Individual','var(--c1)'],['PIM','PME','var(--c2)'],['ADM','Administradora','var(--c3)']];
+function pintaCanais(){
+  const S=CANCMP.map(z=>({n:z[1],cor:z[2],v:cut(DB.d[z[0]].mt)}));
+  const W=1140,H=330,L=54,R=1016,TOP=22,BOT=262,LBL=R+12;
+  const mx=Math.max(...S.flatMap(z=>z.v),1), hi=mx*1.12;
+  const st=hi>12000?3000:hi>6000?2000:hi>3000?1000:hi>1200?500:hi>500?200:100;
+  const NN=M.length, hw=NN>1?(R-L)/(NN-1):(R-L);
+  const x=i=>NN>1?L+i*(R-L)/(NN-1):(L+R)/2, y=v=>BOT-v/hi*(BOT-TOP);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Vidas por mês em Individual, PME e Administradora, só 2026">`+
+    eixoY(L,R,TOP,BOT,0,hi,st,v=>hi>=10000?nf(v/1000)+'k':nf(v));
+  S.forEach(z=>{
+    const d=z.v.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join(' ');
+    s+=`<path d="${d}" fill="none" stroke="${z.cor}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    z.v.forEach((v,i)=>{s+=`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3.6" fill="${z.cor}" stroke="var(--surface)" stroke-width="1.5"/>`;});});
+  // rotulo de cada linha na ponta direita, afastado o bastante para nao colidir
+  const ord=S.map((z,i)=>({i,y:y(z.v.at(-1))})).sort((a,b)=>a.y-b.y);
+  for(let k=1;k<ord.length;k++) if(ord[k].y-ord[k-1].y<30) ord[k].y=ord[k-1].y+30;
+  ord.forEach(z=>{const r=S[z.i];
+    s+=`<text x="${LBL}" y="${(z.y-1).toFixed(1)}" font-size="11.5" font-weight="600" fill="${r.cor}" font-family="var(--font-d)">${esc(r.n)}</text>`+
+       `<text x="${LBL}" y="${(z.y+13).toFixed(1)}" font-size="11" fill="var(--ink-3)" font-family="var(--font-d)">${nf(r.v.at(-1))}</text>`;});
+  s+=NN>1?mesesX(L,R,BOT,NN,M):`<text x="${(L+R)/2}" y="${BOT+18}" text-anchor="middle" font-size="11" fill="var(--ink-2)" font-family="var(--font-d)">${M[0]}</text>`;
+  for(let i=0;i<NN;i++) s+=`<rect class="h5" data-i="${i}" x="${(x(i)-hw/2).toFixed(1)}" y="${TOP}" width="${hw.toFixed(1)}" height="${BOT-TOP}" fill="transparent"/>`;
+  s+='</svg>';
+  const b=document.getElementById('g5'); b.insertAdjacentHTML('afterbegin',s);
+  hover(b,'.tip','.h5',(r,bb)=>{const i=+r.dataset.i,k=bb.width/W, tot=sum(S.map(z=>z.v[i]));
+    return {x:x(i)*k,y:TOP*k+8,
+      html:`<b>${M[i]}/26</b>`+S.map(z=>`<br>${esc(z.n)}: ${nf(z.v[i])}`+(tot?` (${p1(z.v[i]/tot*100)}%)`:'')).join('')};});}
 function barras(id,arr,fmt,cor,aria){
   const W=560,H=300,L=46,R=542,TOP=24,BOT=238;
   const vv0=arr.filter(v=>v!=null&&v>0); const hi=(vv0.length?Math.max(...vv0):1)*1.16, st=hi>900?250:hi>400?100:hi>150?50:hi>60?20:10;
